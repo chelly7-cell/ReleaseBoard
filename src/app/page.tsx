@@ -1,65 +1,129 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main className="min-h-screen bg-background text-foreground">
+      
+      {/* HEADER */}
+      <header className="border-b bg-background/70 backdrop-blur sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
+
+          {/* LOGO */}
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-9 h-9 rounded-md bg-primary flex items-center justify-center text-white font-bold">
+              <img src="logo.svg.png" alt="Logo" className="w-8 h-8" />
+            </div>
+            <span className="font-bold text-lg">ReleaseBoard</span>
+          </Link>
+
+          {/* NAV */}
+          <nav className="hidden md:flex gap-6 text-sm text-muted-foreground">
+            <Link href="#" className="hover:text-foreground transition">Features</Link>
+            <Link href="#" className="hover:text-foreground transition">Pricing</Link>
+            <Link href="#" className="hover:text-foreground transition">Docs</Link>
+          </nav>
+
+          {/* AUTH BUTTONS */}
+          <div className="flex gap-2">
+            <Button variant="ghost" asChild>
+              <Link href="/login">Sign in</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/register">Sign up</Link>
+            </Button>
+          </div>
+
+        </div>
+      </header>
+
+      {/* HERO */}
+      <section className="relative overflow-hidden py-28">
+        <div className="absolute inset-0 flex justify-center">
+          <div className="w-[500px] h-[500px] bg-primary/20 blur-3xl rounded-full" />
+        </div>
+
+        <div className="relative max-w-3xl mx-auto text-center px-6">
+
+          <Badge className="mb-4">For Developers</Badge>
+
+          <h1 className="text-5xl font-bold leading-tight">
+            Publish and share your updates with ease
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+
+          <p className="text-muted-foreground mt-5 text-lg">
+            ReleaseBoard helps developers publish, manage, and distribute app updates
+            through a public changelog page — simple, fast, and beautiful.
           </p>
+
+          <div className="flex justify-center gap-4 mt-8">
+            <Button size="lg" asChild>
+              <Link href="/login">Get Started</Link>
+            </Button>
+
+            <Button size="lg" variant="outline">
+              View Demo
+            </Button>
+          </div>
+
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      {/* FEATURES */}
+      <section className="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-6 py-16">
+
+        <Card className="p-6 hover:shadow-md transition">
+          <h3 className="font-semibold">Beautiful Changelogs</h3>
+          <p className="text-sm text-muted-foreground mt-2">
+            Create clean and modern release notes for your users.
+          </p>
+        </Card>
+
+        <Card className="p-6 hover:shadow-md transition">
+          <h3 className="font-semibold">Developer Friendly</h3>
+          <p className="text-sm text-muted-foreground mt-2">
+            Simple API and dashboard to manage updates easily.
+          </p>
+        </Card>
+
+        <Card className="p-6 hover:shadow-md transition">
+          <h3 className="font-semibold">Public Pages</h3>
+          <p className="text-sm text-muted-foreground mt-2">
+            Share updates instantly with a public changelog page.
+          </p>
+        </Card>
+
+      </section>
+
+      <Separator />
+
+      {/* TRUST SECTION */}
+      <section className="text-center py-14">
+
+        <p className="text-xs text-muted-foreground mb-6">
+          Trusted by developers worldwide
+        </p>
+
+        <div className="flex justify-center flex-wrap gap-8 text-muted-foreground text-sm">
+          <span>GitHub</span>
+          <span>Vercel</span>
+          <span>Netlify</span>
+          <span>Microsoft</span>
+          <span>Stripe</span>
         </div>
-      </main>
-    </div>
+
+      </section>
+
+      {/* FOOTER */}
+      <footer className="border-t py-10 text-center text-sm text-muted-foreground">
+        <p>© {new Date().getFullYear()} ReleaseBoard. All rights reserved.</p>
+      </footer>
+
+    </main>
   );
 }
