@@ -7,8 +7,8 @@ const positiveIntString = z
   .pipe(z.number().int().positive());
 
 export const paginationSchema = z.object({
-  page: positiveIntString.optional().default("1"),
-  pageSize: positiveIntString.optional().default("20"),
+  page: positiveIntString.optional().default(1),
+  pageSize: positiveIntString.optional().default(20),
 });
 
 export function parsePagination(searchParams: URLSearchParams) {
