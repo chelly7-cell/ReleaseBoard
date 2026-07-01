@@ -3,13 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
-import Hero from "./components/Hero";
+import Hero from "@/app/(main)/changelog/[id]/components/Hero";
 
-import Sidebar from "./components/Sidebar";
-import ReleaseCard from "./components/ReleaseCard";
-import EmptyState from "./components/EmptyState";
-import Stats from "./components/Stats";
-import Footer from "./components/Footer";
+import Sidebar from "@/app/(main)/changelog/[id]/components/Sidebar";
+import ReleaseCard from "@/app/(main)/changelog/[id]/components/ReleaseCard";
+import EmptyState from "@/app/(main)/changelog/[id]/components/EmptyState";
+import Stats from "@/app/(main)/changelog/[id]/components/Stats";
+import Footer from "@/app/(main)/changelog/[id]/components/Footer";
 
 type Application = {
   id: number;
