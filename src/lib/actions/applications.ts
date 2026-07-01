@@ -1,4 +1,4 @@
-"use server";
+/*"use server";
 
 import { db } from "@/lib/db/db";
 import { applications } from "@/lib/db/schema";
@@ -40,4 +40,4 @@ export async function getApplications() {
     console.error(error);
     return [];
   }
-}
+}*/
