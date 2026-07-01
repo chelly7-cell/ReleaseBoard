@@ -7,14 +7,22 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { toast } from "sonner";
 
+import { authClient } from "@/lib/auth-client";
+
 import { LoginSchema, LoginFormValues } from "@/lib/validations/login";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { FaGithub } from "react-icons/fa";
+
 export default function LoginPage() {
   const router = useRouter();
+
   const [loading, setLoading] = useState(false);
   const [githubLoading, setGithubLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -25,44 +33,60 @@ export default function LoginPage() {
     resolver: zodResolver(LoginSchema),
   });
 
+  // EMAIL LOGIN (BETTER AUTH)
   const onSubmit = async (data: LoginFormValues) => {
     try {
       setLoading(true);
 
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+      const { error } = await authClient.signIn.email({
+        email: data.email,
+        password: data.password,
       });
 
-      const result = await res.json();
+      if (error) {
+        throw new Error(error.message);
+      }
 
-      if (!res.ok) throw new Error(result.error);
+      toast.success("Welcome back 🎉");
 
-      toast.success("Login successful 🎉");
       reset();
+
       router.push("/dashboard");
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(err.message || "Login failed");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGithubLogin = () => {
-    setGithubLoading(true);
-    window.location.href = "/api/auth/github";
+  // GITHUB LOGIN
+  const handleGithubLogin = async () => {
+    try {
+      setGithubLoading(true);
+
+      await authClient.signIn.social({
+        provider: "github",
+        callbackURL: "/dashboard",
+      });
+    } catch (err) {
+      toast.error("GitHub login failed");
+      console.error(err);
+    } finally {
+      setGithubLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-100 px-4">
       <div className="w-full max-w-md bg-white p-8 rounded-xl shadow">
 
-        <h1 className="text-2xl font-bold mb-6">Login</h1>
+        <h1 className="text-2xl font-bold mb-6">
+          Welcome back
+        </h1>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
-          {/* Email */}
+          {/* EMAIL */}
           <div>
             <Input placeholder="Email" {...register("email")} />
             {errors.email && (
@@ -72,13 +96,22 @@ export default function LoginPage() {
             )}
           </div>
 
-          {/* Password */}
-          <div>
+          {/* PASSWORD */}
+          <div className="relative">
             <Input
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Password"
               {...register("password")}
             />
+
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-2.5 text-gray-500"
+            >
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+
             {errors.password && (
               <p className="text-red-500 text-sm">
                 {errors.password.message}
@@ -86,38 +119,40 @@ export default function LoginPage() {
             )}
           </div>
 
-          {/* Login button */}
+          {/* LOGIN BUTTON */}
           <Button className="w-full" disabled={loading}>
-            {loading ? "Loading..." : "Login"}
+            {loading && (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            )}
+            Sign in
           </Button>
 
-          {/* GitHub login button */}
+          {/* DIVIDER */}
+          <div className="text-center text-sm text-gray-500">
+            or continue with
+          </div>
+
+          {/* GITHUB */}
           <Button
             type="button"
             variant="outline"
-            className="w-full flex items-center justify-center gap-2"
+            className="w-full flex items-center gap-2"
             onClick={handleGithubLogin}
             disabled={githubLoading}
           >
-            {/* GitHub icon */}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
-              <path d="M12 .5C5.73.5.75 5.7.75 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2.1c-3.2.7-3.9-1.4-3.9-1.4-.5-1.2-1.2-1.5-1.2-1.5-1-.7.1-.7.1-.7 1.1.1 1.7 1.1 1.7 1.1 1 .1.8 2.1 2.7 2.7.2-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.9 0-1.3.5-2.3 1.1-3.1-.1-.3-.5-1.5.1-3.1 0 0 .9-.3 3.2 1.2a11 11 0 0 1 5.8 0C15.8 5 16.7 5.3 16.7 5.3c.6 1.6.2 2.8.1 3.1.7.8 1.1 1.8 1.1 3.1 0 4.6-2.7 5.6-5.3 5.9.4.4.8 1.1.8 2.2v3.2c0 .3.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.25 5.7 18.27.5 12 .5z" />
-            </svg>
-
-            Connect with GitHub
+            {githubLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <FaGithub />
+            )}
+            GitHub
           </Button>
 
-          {/* Register link */}
-          <p className="text-sm text-center">
-            No account?{" "}
+          {/* REGISTER */}
+          <p className="text-center text-sm text-gray-500 mt-4">
+            Don&apos;t have an account?{" "}
             <Link href="/register" className="text-blue-600">
-              Register
+              Create one
             </Link>
           </p>
 

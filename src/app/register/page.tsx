@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { toast } from "sonner";
 
+import { authClient } from "@/lib/auth-client";
 import {
   RegisterSchema,
   RegisterFormValues,
@@ -17,6 +18,7 @@ import { Input } from "@/components/ui/input";
 
 export default function RegisterPage() {
   const router = useRouter();
+
   const [loading, setLoading] = useState(false);
   const [githubLoading, setGithubLoading] = useState(false);
 
@@ -29,41 +31,58 @@ export default function RegisterPage() {
     resolver: zodResolver(RegisterSchema),
   });
 
+  // EMAIL REGISTER (BETTER AUTH)
   const onSubmit = async (data: RegisterFormValues) => {
     try {
       setLoading(true);
 
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+      const { error } = await authClient.signUp.email({
+        name: data.name,
+        email: data.email,
+        password: data.password,
       });
 
-      const result = await res.json();
-
-      if (!res.ok) throw new Error(result.error);
+      if (error) {
+        throw new Error(error.message);
+      }
 
       toast.success("Account created 🎉");
+
       reset();
 
-      router.push("/login");
+      // Better Auth already logs user in → redirect only
+      router.push("/dashboard");
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(err.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGithubRegister = () => {
-    setGithubLoading(true);
-    window.location.href = "/api/auth/github";
+  // GITHUB REGISTER
+  const handleGithubRegister = async () => {
+    try {
+      setGithubLoading(true);
+
+      await authClient.signIn.social({
+        provider: "github",
+        callbackURL: "/dashboard",
+      });
+    } catch (err) {
+      toast.error("GitHub login failed");
+      console.error(err);
+    } finally {
+      setGithubLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-100 px-4">
       <div className="w-full max-w-md bg-white p-8 rounded-xl shadow">
 
-        <h1 className="text-2xl font-bold mb-6">Register</h1>
+        <h1 className="text-2xl font-bold mb-6">
+          Create account
+        </h1>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
@@ -101,31 +120,20 @@ export default function RegisterPage() {
             )}
           </div>
 
-          {/* REGISTER BUTTON */}
+          {/* SUBMIT */}
           <Button className="w-full" disabled={loading}>
             {loading ? "Creating account..." : "Register"}
           </Button>
 
-          {/* GITHUB BUTTON */}
+          {/* GITHUB */}
           <Button
             type="button"
             variant="outline"
-            className="w-full flex items-center justify-center gap-2"
+            className="w-full"
             onClick={handleGithubRegister}
             disabled={githubLoading}
           >
-            {/* GitHub icon */}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
-              <path d="M12 .5C5.73.5.75 5.7.75 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2.1c-3.2.7-3.9-1.4-3.9-1.4-.5-1.2-1.2-1.5-1.2-1.5-1-.7.1-.7.1-.7 1.1.1 1.7 1.1 1.7 1.1 1 .1.8 2.1 2.7 2.7.2-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.9 0-1.3.5-2.3 1.1-3.1-.1-.3-.5-1.5.1-3.1 0 0 .9-.3 3.2 1.2a11 11 0 0 1 5.8 0C15.8 5 16.7 5.3 16.7 5.3c.6 1.6.2 2.8.1 3.1.7.8 1.1 1.8 1.1 3.1 0 4.6-2.7 5.6-5.3 5.9.4.4.8 1.1.8 2.2v3.2c0 .3.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.25 5.7 18.27.5 12 .5z" />
-            </svg>
-
-            Continue with GitHub
+            {githubLoading ? "Loading..." : "Continue with GitHub"}
           </Button>
 
           {/* LOGIN LINK */}
