@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, BarChart3, Plus } from "lucide-react";
-
+import { AlertCircle, BarChart3, Plus, Sparkles } from "lucide-react";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 
 
 
@@ -85,34 +87,72 @@ export default function AnalysePage() {
     );
   }
 
-  // ---------------- EMPTY STATE (SHADCN STYLE) ----------------
-  if (!data || data.overview.applications === 0) {
-    return (
-      <div className="p-10 flex items-center justify-center">
-        <Card className="w-full max-w-lg">
-          <CardContent className="p-10 flex flex-col items-center text-center gap-4">
-            <div className="p-3 rounded-full bg-muted">
-              <BarChart3 className="w-6 h-6 text-muted-foreground" />
+ if (!data || data.overview.applications === 0) {
+  return (
+    <div className="min-h-[calc(100vh-80px)] flex items-center justify-center px-6">
+      <Empty className="max-w-3xl border bg-background rounded-2xl shadow-sm">
+        <EmptyHeader>
+          <EmptyMedia className="bg-primary/10">
+            <BarChart3 className="size-8 text-primary" />
+          </EmptyMedia>
+
+          <EmptyTitle className="text-3xl">
+            Your analytics dashboard is empty
+          </EmptyTitle>
+
+          <EmptyDescription className="max-w-xl text-base">
+            Analytics will automatically appear once you create your first
+            application and start publishing updates. Track views, monitor
+            engagement, and discover your best-performing releases—all in one
+            place.
+          </EmptyDescription>
+        </EmptyHeader>
+
+        <EmptyContent>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button asChild size="lg">
+              <Link href="/applications/new">
+                <Plus className="mr-2 h-4 w-4" />
+                Create Application
+              </Link>
+            </Button>
+
+            <Button variant="outline" size="lg">
+              <Sparkles className="mr-2 h-4 w-4" />
+              Learn More
+            </Button>
+          </div>
+
+          <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+            <div className="rounded-xl border p-5 text-left">
+              <BarChart3 className="h-5 w-5 mb-3 text-primary" />
+              <h3 className="font-medium">Real-time Insights</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Watch application performance update automatically.
+              </p>
             </div>
 
-            <h2 className="text-xl font-semibold">
-              No analytics available yet
-            </h2>
+            <div className="rounded-xl border p-5 text-left">
+              <Sparkles className="h-5 w-5 mb-3 text-primary" />
+              <h3 className="font-medium">Track Engagement</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Measure views and understand which releases perform best.
+              </p>
+            </div>
 
-            <p className="text-sm text-muted-foreground max-w-sm">
-              You don’t have any applications or updates yet. Create your first
-              app to start tracking views, performance, and updates analytics.
-            </p>
-
-            <Button className="gap-2">
-              <Plus className="w-4 h-4" />
-              Create Application
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+            <div className="rounded-xl border p-5 text-left">
+              <Plus className="h-5 w-5 mb-3 text-primary" />
+              <h3 className="font-medium">Publish Faster</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Add your first application to unlock your dashboard.
+              </p>
+            </div>
+          </div>
+        </EmptyContent>
+      </Empty>
+    </div>
+  );
+}
 
   const { overview } = data;
 
