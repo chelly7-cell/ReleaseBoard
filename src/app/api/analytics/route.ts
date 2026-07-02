@@ -165,23 +165,28 @@ export async function GET(req: NextRequest) {
       updatesTotal === 0
         ? 0
         : Math.round(viewsTotal / updatesTotal);
+    
+    const isEmpty =
+      applicationsTotal === 0 &&
+      updatesTotal === 0 &&
+      viewsTotal === 0;
 
     return NextResponse.json({
-      overview: {
-        applications: applicationsTotal,
-        updates: updatesTotal,
-        published: publishedCount[0]?.count ?? 0,
-        drafts: draftCount[0]?.count ?? 0,
-        totalViews: viewsTotal,
-        averageViews,
-      },
+  isEmpty,
 
-      topApplications,
+  overview: {
+    applications: applicationsTotal,
+    updates: updatesTotal,
+    published: publishedCount[0]?.count ?? 0,
+    drafts: draftCount[0]?.count ?? 0,
+    totalViews: viewsTotal,
+    averageViews,
+  },
 
-      topUpdates,
-
-      recentApplications,
-    });
+  topApplications,
+  topUpdates,
+  recentApplications,
+});
   } catch (error) {
     console.error(error);
 
