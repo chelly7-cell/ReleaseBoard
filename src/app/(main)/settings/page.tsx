@@ -7,9 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2, User, Moon } from "lucide-react";
 
 export default function SettingsPage() {
+  const toast = (title: string, description?: string) => {
+    alert(`${title}${description ? "\n" + description : ""}`);
+  };
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -19,20 +24,22 @@ export default function SettingsPage() {
     darkMode: false,
   });
 
-  // GET settings
+  // 📥 GET settings
   useEffect(() => {
     const fetchSettings = async () => {
       try {
         const res = await fetch("/api/settings");
-        const data = await res.json();
+        const json = await res.json();
+
+        if (!json.success) throw new Error("Failed to load settings");
 
         setForm({
-          name: data.name,
-          email: data.email,
-          darkMode: data.theme === "dark",
+          name: json.data.name,
+          email: json.data.email,
+          darkMode: json.data.theme === "dark",
         });
       } catch (err) {
-        console.error(err);
+        toast("Error", "Failed to load settings");
       } finally {
         setLoading(false);
       }
@@ -41,16 +48,14 @@ export default function SettingsPage() {
     fetchSettings();
   }, []);
 
-  // UPDATE settings
+  // 💾 SAVE settings
   const handleSave = async () => {
     setSaving(true);
 
     try {
       const res = await fetch("/api/settings", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: form.name,
           email: form.email,
@@ -58,19 +63,27 @@ export default function SettingsPage() {
         }),
       });
 
-      await res.json();
-    } catch (err) {
-      console.error(err);
+      const json = await res.json();
+
+      if (!json.success) {
+        throw new Error(json.message || "Save failed");
+      }
+
+      toast("Success", "Settings updated successfully");
+    } catch (err: any) {
+      toast("Error", err.message || "Something went wrong");
     } finally {
       setSaving(false);
     }
   };
 
+  // ⏳ Loading UI
   if (loading) {
     return (
-      <div className="p-6 space-y-4">
-        <div className="h-8 w-48 bg-muted animate-pulse rounded" />
-        <div className="h-32 bg-muted animate-pulse rounded" />
+      <div className="p-6 max-w-2xl mx-auto space-y-6">
+        <Skeleton className="h-10 w-1/3" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-32 w-full" />
       </div>
     );
   }
@@ -81,14 +94,17 @@ export default function SettingsPage() {
       <div>
         <h1 className="text-3xl font-bold">Settings</h1>
         <p className="text-muted-foreground">
-          Manage your account preferences
+          Manage your account and preferences
         </p>
       </div>
 
       {/* Profile Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Profile</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Profile
+          </CardTitle>
         </CardHeader>
 
         <CardContent className="space-y-4">
@@ -99,6 +115,7 @@ export default function SettingsPage() {
               onChange={(e) =>
                 setForm({ ...form, name: e.target.value })
               }
+              placeholder="Your name"
             />
           </div>
 
@@ -109,15 +126,19 @@ export default function SettingsPage() {
               onChange={(e) =>
                 setForm({ ...form, email: e.target.value })
               }
+              placeholder="you@example.com"
             />
           </div>
         </CardContent>
       </Card>
 
-      {/* Preferences */}
+      {/* Appearance */}
       <Card>
         <CardHeader>
-          <CardTitle>Preferences</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Moon className="h-5 w-5" />
+            Appearance
+          </CardTitle>
         </CardHeader>
 
         <CardContent>
@@ -125,7 +146,7 @@ export default function SettingsPage() {
             <div>
               <p className="font-medium">Dark Mode</p>
               <p className="text-sm text-muted-foreground">
-                Toggle theme appearance
+                Toggle light/dark theme
               </p>
             </div>
 
@@ -142,7 +163,11 @@ export default function SettingsPage() {
       <Separator />
 
       {/* Save Button */}
-      <Button onClick={handleSave} disabled={saving}>
+      <Button
+        onClick={handleSave}
+        disabled={saving}
+        className="w-full"
+      >
         {saving ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
