@@ -6,6 +6,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, BarChart3, Plus } from "lucide-react";
 
+
+
+
 type AnalyticsData = {
   overview: {
     applications: number;
