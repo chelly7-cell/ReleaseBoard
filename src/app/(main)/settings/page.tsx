@@ -10,45 +10,53 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2, User, Moon } from "lucide-react";
 
+type SettingsForm = {
+  name: string;
+  email: string;
+  darkMode: boolean;
+};
+
 export default function SettingsPage() {
-  const toast = (title: string, description?: string) => {
-    alert(`${title}${description ? "\n" + description : ""}`);
-  };
+  const userId = "demo-user-id"; // 🔥 replace later with real auth
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<SettingsForm>({
     name: "",
     email: "",
     darkMode: false,
   });
 
-  // 📥 GET settings
+  const toast = (title: string, desc?: string) => {
+    alert(`${title}${desc ? "\n" + desc : ""}`);
+  };
+
+  // 🟢 GET DB SETTINGS
   useEffect(() => {
-    const fetchSettings = async () => {
+    const load = async () => {
       try {
-        const res = await fetch("/api/settings");
+        const res = await fetch(`/api/settings?userId=${userId}`);
         const json = await res.json();
 
-        if (!json.success) throw new Error("Failed to load settings");
+        if (!res.ok) throw new Error(json.message);
 
         setForm({
           name: json.data.name,
           email: json.data.email,
           darkMode: json.data.theme === "dark",
         });
-      } catch (err) {
-        toast("Error", "Failed to load settings");
+      } catch (err: any) {
+        toast("Error", err.message);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSettings();
+    load();
   }, []);
 
-  // 💾 SAVE settings
+  // 🟡 SAVE TO DB
   const handleSave = async () => {
     setSaving(true);
 
@@ -57,6 +65,7 @@ export default function SettingsPage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          userId,
           name: form.name,
           email: form.email,
           theme: form.darkMode ? "dark" : "light",
@@ -65,24 +74,20 @@ export default function SettingsPage() {
 
       const json = await res.json();
 
-      if (!json.success) {
-        throw new Error(json.message || "Save failed");
-      }
+      if (!res.ok) throw new Error(json.message);
 
-      toast("Success", "Settings updated successfully");
+      toast("Success", json.message);
     } catch (err: any) {
-      toast("Error", err.message || "Something went wrong");
+      toast("Error", err.message);
     } finally {
       setSaving(false);
     }
   };
 
-  // ⏳ Loading UI
   if (loading) {
     return (
       <div className="p-6 max-w-2xl mx-auto space-y-6">
         <Skeleton className="h-10 w-1/3" />
-        <Skeleton className="h-32 w-full" />
         <Skeleton className="h-32 w-full" />
       </div>
     );
@@ -90,15 +95,14 @@ export default function SettingsPage() {
 
   return (
     <div className="p-6 max-w-2xl mx-auto space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-3xl font-bold">Settings</h1>
         <p className="text-muted-foreground">
-          Manage your account and preferences
+          Connected to real database (Drizzle)
         </p>
       </div>
 
-      {/* Profile Card */}
+      {/* Profile */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -108,31 +112,29 @@ export default function SettingsPage() {
         </CardHeader>
 
         <CardContent className="space-y-4">
-          <div className="space-y-2">
+          <div>
             <Label>Name</Label>
             <Input
               value={form.name}
               onChange={(e) =>
-                setForm({ ...form, name: e.target.value })
+                setForm((p) => ({ ...p, name: e.target.value }))
               }
-              placeholder="Your name"
             />
           </div>
 
-          <div className="space-y-2">
+          <div>
             <Label>Email</Label>
             <Input
               value={form.email}
               onChange={(e) =>
-                setForm({ ...form, email: e.target.value })
+                setForm((p) => ({ ...p, email: e.target.value }))
               }
-              placeholder="you@example.com"
             />
           </div>
         </CardContent>
       </Card>
 
-      {/* Appearance */}
+      {/* Theme */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -142,18 +144,18 @@ export default function SettingsPage() {
         </CardHeader>
 
         <CardContent>
-          <div className="flex items-center justify-between">
+          <div className="flex justify-between">
             <div>
               <p className="font-medium">Dark Mode</p>
               <p className="text-sm text-muted-foreground">
-                Toggle light/dark theme
+                UI preference
               </p>
             </div>
 
             <Switch
               checked={form.darkMode}
               onCheckedChange={(val) =>
-                setForm({ ...form, darkMode: val })
+                setForm((p) => ({ ...p, darkMode: val }))
               }
             />
           </div>
@@ -162,12 +164,7 @@ export default function SettingsPage() {
 
       <Separator />
 
-      {/* Save Button */}
-      <Button
-        onClick={handleSave}
-        disabled={saving}
-        className="w-full"
-      >
+      <Button onClick={handleSave} disabled={saving} className="w-full">
         {saving ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
