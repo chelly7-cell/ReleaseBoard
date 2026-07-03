@@ -1,108 +1,274 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { user } from "@/lib/db/schema";
+import { user, session } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { z } from "zod";
 
-// 🔒 validation
-const settingsSchema = z.object({
-  userId: z.string(),
-  name: z.string().min(2).max(50),
-  email: z.string().email(),
-  theme: z.enum(["light", "dark"]),
+/* -------------------------------------------------------------------------- */
+/*                                   Schema                                   */
+/* -------------------------------------------------------------------------- */
+
+const updateProfileSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Name must contain at least 2 characters.")
+    .max(100, "Name is too long."),
+
+  image: z
+    .string()
+    .url("Image must be a valid URL.")
+    .nullable()
+    .optional(),
 });
 
-// 🟢 GET SETTINGS (REAL DB)
-export async function GET(req: NextRequest) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
+/* -------------------------------------------------------------------------- */
+/*                             Helper: Get Session                            */
+/* -------------------------------------------------------------------------- */
 
-    if (!userId) {
+async function getCurrentUser(request: NextRequest) {
+  const sessionData = await auth.api.getSession({
+    headers: request.headers,
+  });
+
+  if (!sessionData?.user) {
+    return null;
+  }
+
+  return sessionData.user;
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                   GET                                      */
+/* -------------------------------------------------------------------------- */
+
+export async function GET(request: NextRequest) {
+  try {
+    const currentUser = await getCurrentUser(request);
+
+    if (!currentUser) {
       return NextResponse.json(
-        { success: false, message: "Missing userId" },
-        { status: 400 }
+        {
+          success: false,
+          message: "Unauthorized",
+        },
+        {
+          status: 401,
+        }
       );
     }
 
-    const foundUser = await db
+    const [dbUser] = await db
       .select()
       .from(user)
-      .where(eq(user.id, userId))
+      .where(eq(user.id, currentUser.id))
       .limit(1);
 
-    if (!foundUser.length) {
+    if (!dbUser) {
       return NextResponse.json(
-        { success: false, message: "User not found" },
-        { status: 404 }
+        {
+          success: false,
+          message: "User not found.",
+        },
+        {
+          status: 404,
+        }
       );
     }
 
     return NextResponse.json({
       success: true,
-      data: {
-        name: foundUser[0].name,
-        email: foundUser[0].email,
-        theme: "light", // ⚠️ not in schema yet (can be added later)
+
+      user: {
+        id: dbUser.id,
+        name: dbUser.name,
+        email: dbUser.email,
+        image: dbUser.image,
+        emailVerified: dbUser.emailVerified,
+        createdAt: dbUser.createdAt,
+        updatedAt: dbUser.updatedAt,
       },
     });
   } catch (error) {
+    console.error("GET SETTINGS ERROR:", error);
+
     return NextResponse.json(
-      { success: false, message: "Failed to fetch settings" },
-      { status: 500 }
+      {
+        success: false,
+        message: "Internal server error.",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }
 
-// 🟡 UPDATE SETTINGS (REAL DB)
-export async function PUT(req: NextRequest) {
+/* -------------------------------------------------------------------------- */
+/*                                  PATCH                                     */
+/* -------------------------------------------------------------------------- */
+
+export async function PATCH(request: NextRequest) {
   try {
-    const body = await req.json();
+    const currentUser = await getCurrentUser(request);
 
-    const parsed = settingsSchema.safeParse(body);
-
-    if (!parsed.success) {
+    if (!currentUser) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid input",
-          errors: parsed.error.flatten(),
+          message: "Unauthorized",
         },
-        { status: 400 }
+        {
+          status: 401,
+        }
       );
     }
 
-    const { userId, name, email } = parsed.data;
+    const body = await request.json();
 
-    const updated = await db
+    const validation = updateProfileSchema.safeParse(body);
+
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Validation failed.",
+          errors: validation.error.flatten(),
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    const { name, image } = validation.data;
+
+    const [updatedUser] = await db
       .update(user)
       .set({
         name,
-        email,
+        image: image ?? null,
         updatedAt: new Date(),
       })
-      .where(eq(user.id, userId))
+      .where(eq(user.id, currentUser.id))
       .returning();
-
-    if (!updated.length) {
-      return NextResponse.json(
-        { success: false, message: "User not found" },
-        { status: 404 }
-      );
-    }
 
     return NextResponse.json({
       success: true,
-      message: "Settings updated successfully",
-      data: {
-        name: updated[0].name,
-        email: updated[0].email,
+      message: "Profile updated successfully.",
+
+      user: {
+        id: updatedUser.id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        image: updatedUser.image,
+        emailVerified: updatedUser.emailVerified,
+        createdAt: updatedUser.createdAt,
+        updatedAt: updatedUser.updatedAt,
       },
     });
   } catch (error) {
+    console.error("PATCH SETTINGS ERROR:", error);
+
     return NextResponse.json(
-      { success: false, message: "Server error" },
-      { status: 500 }
+      {
+        success: false,
+        message: "Internal server error.",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                  DELETE                                    */
+/* -------------------------------------------------------------------------- */
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const currentUser = await getCurrentUser(request);
+
+    if (!currentUser) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Unauthorized",
+        },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    // Delete the user.
+    // Because your schema uses onDelete: "cascade",
+    // sessions, accounts, applications and updates
+    // will be removed automatically.
+    await db.delete(user).where(eq(user.id, currentUser.id));
+
+    return NextResponse.json({
+      success: true,
+      message: "Your account has been deleted successfully.",
+    });
+  } catch (error) {
+    console.error("DELETE SETTINGS ERROR:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Internal server error.",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                   POST                                     */
+/*                        Sign Out From All Devices                            */
+/* -------------------------------------------------------------------------- */
+
+export async function POST(request: NextRequest) {
+  try {
+    const currentUser = await getCurrentUser(request);
+
+    if (!currentUser) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Unauthorized",
+        },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    // Remove every session belonging to this user.
+    await db
+      .delete(session)
+      .where(eq(session.userId, currentUser.id));
+
+    return NextResponse.json({
+      success: true,
+      message: "Signed out from all devices successfully.",
+    });
+  } catch (error) {
+    console.error("SIGN OUT ALL ERROR:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Internal server error.",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }
