@@ -13,6 +13,9 @@ import {
   Trash2,
 } from "lucide-react";
 
+import { useTheme } from "next-themes";
+
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,8 +49,15 @@ export default function SettingsPage() {
   const [name, setName] = useState("");
   const [image, setImage] = useState("");
 
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(false)
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+if (!mounted) return null;
   /* -------------------------------------------------------------------------- */
   /*                                 LOAD USER                                  */
   /* -------------------------------------------------------------------------- */
@@ -237,17 +247,21 @@ export default function SettingsPage() {
 
             <div className="flex items-center gap-2">
               <Sun className="h-4 w-4" />
-              <Switch checked={darkMode} onCheckedChange={setDarkMode} />
+              <Switch
+                checked={theme === "dark"}
+                onCheckedChange={(checked) =>
+                  setTheme(checked ? "dark" : "light")}/>
               <Moon className="h-4 w-4" />
             </div>
           </div>
 
           <div className="space-y-2">
             <Label>Theme</Label>
-            <Select defaultValue="system">
+            <Select value={theme} onValueChange={setTheme}>
               <SelectTrigger className="w-[220px]">
                 <SelectValue />
               </SelectTrigger>
+
               <SelectContent>
                 <SelectItem value="light">Light</SelectItem>
                 <SelectItem value="dark">Dark</SelectItem>
