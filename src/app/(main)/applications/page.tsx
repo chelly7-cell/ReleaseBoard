@@ -96,31 +96,34 @@ export default function ApplicationsPage() {
   }, [loadApplications]);
 
   // CREATE
-  const handleCreate = async () => {
-    try {
-      setError("");
+const handleCreate = async () => {
+  try {
+    setError("");
 
-      const res = await fetch("/api/applications", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, logo }),
-      });
+    const res = await fetch("/api/applications", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        logo: logo || null, // ✅ IMPORTANT FIX
+      }),
+    });
 
-      if (res.status === 401) {
-        router.push("/login");
-        return;
-      }
-
-      if (!res.ok) throw new Error();
-
-      setName("");
-      setLogo("");
-      await loadApplications();
-    } catch {
-      setError("Failed to create application");
+    if (res.status === 401) {
+      router.push("/login");
+      return;
     }
-  };
+
+    if (!res.ok) throw new Error();
+
+    setName("");
+    setLogo("");
+    await loadApplications();
+  } catch {
+    setError("Failed to create application");
+  }
+};
 
   // STATS
   const stats = useMemo(() => {
@@ -197,7 +200,11 @@ export default function ApplicationsPage() {
               </div>
 
               <DialogFooter>
-                <Button className="w-full rounded-xl" onClick={handleCreate}>
+                <Button
+                  className="w-full rounded-xl"
+                  onClick={handleCreate}
+                  disabled={!name}
+                >
                   Create Application
                 </Button>
               </DialogFooter>
