@@ -9,7 +9,12 @@ export default function Providers({
   children: React.ReactNode;
 }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark">
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
       {children}
       <Toaster richColors position="top-right" />
     </ThemeProvider>

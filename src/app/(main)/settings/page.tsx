@@ -49,7 +49,7 @@ export default function SettingsPage() {
   const [name, setName] = useState("");
   const [image, setImage] = useState("");
 
-  const [darkMode, setDarkMode] = useState(false)
+  
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
