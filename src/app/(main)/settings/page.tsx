@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 import { useTheme } from "next-themes";
-
+import { toast } from "sonner";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -49,23 +49,16 @@ export default function SettingsPage() {
   const [name, setName] = useState("");
   const [image, setImage] = useState("");
 
-  
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-if (!mounted) return null;
-  /* -------------------------------------------------------------------------- */
-  /*                                 LOAD USER                                  */
-  /* -------------------------------------------------------------------------- */
-
+  /* -------------------------- LOAD USER -------------------------- */
   useEffect(() => {
     const loadUser = async () => {
       try {
         const res = await fetch("/api/settings");
+
+        if (!res.ok) throw new Error("Failed to fetch");
+
         const data = await res.json();
 
         if (data.success) {
@@ -74,7 +67,7 @@ if (!mounted) return null;
           setImage(data.user.image || "");
         }
       } catch (err) {
-        console.error(err);
+        toast.error("Failed to load user");
       } finally {
         setLoading(false);
       }
@@ -83,19 +76,14 @@ if (!mounted) return null;
     loadUser();
   }, []);
 
-  /* -------------------------------------------------------------------------- */
-  /*                               SAVE PROFILE                                 */
-  /* -------------------------------------------------------------------------- */
-
+  /* -------------------------- SAVE PROFILE -------------------------- */
   const saveProfile = async () => {
     setSaving(true);
 
     try {
       const res = await fetch("/api/settings", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
           image: image || null,
@@ -104,80 +92,72 @@ if (!mounted) return null;
 
       const data = await res.json();
 
-      if (data.success) {
-        setUser(data.user);
-        alert("Profile updated successfully");
-      } else {
-        alert(data.message || "Error updating profile");
-      }
-    } catch (err) {
-      console.error(err);
+      if (!res.ok) throw new Error(data.message);
+
+      setUser(data.user);
+      toast.success("Profile updated");
+    } catch (err: any) {
+      toast.error(err.message || "Update failed");
     } finally {
       setSaving(false);
     }
   };
 
-  /* -------------------------------------------------------------------------- */
-  /*                             SIGN OUT ALL DEVICES                           */
-  /* -------------------------------------------------------------------------- */
-
+  /* -------------------------- SIGN OUT ALL -------------------------- */
   const signOutAll = async () => {
-    await fetch("/api/settings", {
-      method: "POST",
-    });
+    try {
+      const res = await fetch("/api/settings", { method: "POST" });
 
-    window.location.href = "/login";
+      if (!res.ok) throw new Error("Failed to sign out");
+
+      toast.success("Signed out from all devices");
+
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 500);
+    } catch {
+      toast.error("Sign out failed");
+    }
   };
 
-  /* -------------------------------------------------------------------------- */
-  /*                              DELETE ACCOUNT                                */
-  /* -------------------------------------------------------------------------- */
-
+  /* -------------------------- DELETE ACCOUNT -------------------------- */
   const deleteAccount = async () => {
-    const confirmDelete = confirm(
-      "Are you sure? This action cannot be undone."
-    );
+    const ok = confirm("This will permanently delete your account.");
+    if (!ok) return;
 
-    if (!confirmDelete) return;
+    try {
+      const res = await fetch("/api/settings", { method: "DELETE" });
 
-    await fetch("/api/settings", {
-      method: "DELETE",
-    });
+      if (!res.ok) throw new Error("Delete failed");
 
-    window.location.href = "/register";
+      toast.success("Account deleted");
+
+      setTimeout(() => {
+        window.location.href = "/register";
+      }, 500);
+    } catch {
+      toast.error("Delete failed");
+    }
   };
 
-  /* -------------------------------------------------------------------------- */
-  /*                                   LOADING                                  */
-  /* -------------------------------------------------------------------------- */
-
+  /* -------------------------- LOADING -------------------------- */
   if (loading) {
-    return (
-      <div className="p-6 text-muted-foreground">
-        Loading settings...
-      </div>
-    );
+    return <div className="p-6 text-muted-foreground">Loading...</div>;
   }
 
   if (!user) {
-    return (
-      <div className="p-6 text-red-500">
-        Failed to load user.
-      </div>
-    );
+    return <div className="p-6 text-red-500">User not found</div>;
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*                                   UI                                       */
-  /* -------------------------------------------------------------------------- */
-
+  /* -------------------------- UI -------------------------- */
   return (
     <div className="container mx-auto max-w-5xl space-y-8 py-8">
-      {/* Header */}
+
+      {/* HEADER */}
       <div>
-        <h1 className="text-4xl font-bold tracking-tight">Settings</h1>
-        <p className="mt-2 text-muted-foreground">
-          Manage your account settings.
+        <h1 className="text-4xl font-bold">Settings</h1>
+        <p className="text-muted-foreground mt-2">
+          Manage your account
         </p>
       </div>
 
@@ -190,39 +170,28 @@ if (!mounted) return null;
           </CardTitle>
         </CardHeader>
 
-        <CardContent className="space-y-6">
-          <div className="flex items-center gap-5">
-            <Avatar className="h-20 w-20">
-              <AvatarImage src={user.image || ""} />
-              <AvatarFallback>
-                {user.name
-                  ?.split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-          </div>
+        <CardContent className="space-y-4">
+          <Avatar className="h-16 w-16">
+            <AvatarImage src={user.image || ""} />
+            <AvatarFallback>
+              {user.name?.[0]?.toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
 
-          <Separator />
-
-          <div className="grid gap-5 md:grid-cols-2">
-            <div className="space-y-2">
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
               <Label>Name</Label>
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
+              <Input value={name} onChange={(e) => setName(e.target.value)} />
             </div>
 
-            <div className="space-y-2">
+            <div>
               <Label>Email</Label>
               <Input value={user.email} disabled />
             </div>
           </div>
 
           <Button onClick={saveProfile} disabled={saving}>
-            {saving ? "Saving..." : "Save Profile"}
+            {saving ? "Saving..." : "Save"}
           </Button>
         </CardContent>
       </Card>
@@ -236,39 +205,38 @@ if (!mounted) return null;
           </CardTitle>
         </CardHeader>
 
-        <CardContent className="space-y-6">
-          <div className="flex items-center justify-between rounded-lg border p-4">
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between border p-4 rounded-lg">
             <div>
-              <div className="font-medium">Dark Mode</div>
-              <p className="text-sm text-muted-foreground">
-                Toggle dark mode
-              </p>
+              <div>Dark Mode</div>
+              <div className="text-sm text-muted-foreground">
+                Toggle theme
+              </div>
             </div>
 
             <div className="flex items-center gap-2">
               <Sun className="h-4 w-4" />
               <Switch
                 checked={theme === "dark"}
-                onCheckedChange={(checked) =>
-                  setTheme(checked ? "dark" : "light")}/>
+                onCheckedChange={(v) =>
+                  setTheme(v ? "dark" : "light")
+                }
+              />
               <Moon className="h-4 w-4" />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Theme</Label>
-            <Select value={theme} onValueChange={setTheme}>
-              <SelectTrigger className="w-[220px]">
-                <SelectValue />
-              </SelectTrigger>
+          <Select value={theme} onValueChange={setTheme}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue />
+            </SelectTrigger>
 
-              <SelectContent>
-                <SelectItem value="light">Light</SelectItem>
-                <SelectItem value="dark">Dark</SelectItem>
-                <SelectItem value="system">System</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            <SelectContent>
+              <SelectItem value="light">Light</SelectItem>
+              <SelectItem value="dark">Dark</SelectItem>
+              <SelectItem value="system">System</SelectItem>
+            </SelectContent>
+          </Select>
         </CardContent>
       </Card>
 
@@ -281,7 +249,7 @@ if (!mounted) return null;
           </CardTitle>
         </CardHeader>
 
-        <CardContent className="space-y-4">
+        <CardContent>
           <Button variant="outline" onClick={signOutAll}>
             <LogOut className="h-4 w-4 mr-2" />
             Sign out everywhere
@@ -298,54 +266,34 @@ if (!mounted) return null;
           </CardTitle>
         </CardHeader>
 
-        <CardContent className="space-y-4">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">User ID</span>
-            <span className="font-mono text-sm">{user.id}</span>
+        <CardContent className="space-y-2 text-sm">
+          <div>ID: {user.id}</div>
+          <div>
+            Created: {new Date(user.createdAt).toLocaleDateString()}
           </div>
-
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Created</span>
-            <span>
-              {new Date(user.createdAt).toLocaleDateString()}
-            </span>
-          </div>
-
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">
-              Email Verified
-            </span>
-
-            <span
-              className={
-                user.emailVerified
-                  ? "text-green-500"
-                  : "text-red-500"
-              }
-            >
-              {user.emailVerified ? "Verified" : "Not verified"}
-            </span>
+          <div
+            className={
+              user.emailVerified ? "text-green-500" : "text-red-500"
+            }
+          >
+            {user.emailVerified ? "Verified" : "Not verified"}
           </div>
         </CardContent>
       </Card>
 
-      {/* DANGER ZONE */}
+      {/* DANGER */}
       <Card className="border-red-500/40">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-red-600">
+          <CardTitle className="text-red-500 flex items-center gap-2">
             <AlertTriangle className="h-5 w-5" />
             Danger Zone
           </CardTitle>
         </CardHeader>
 
         <CardContent>
-          <Button
-            variant="destructive"
-            onClick={deleteAccount}
-            className="gap-2"
-          >
-            <Trash2 className="h-4 w-4" />
-            Delete Account
+          <Button variant="destructive" onClick={deleteAccount}>
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete account
           </Button>
         </CardContent>
       </Card>
