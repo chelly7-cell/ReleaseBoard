@@ -39,7 +39,7 @@ export default function CreateUpdatePage() {
   const [loading, setLoading] = useState(false);
   const [loadingApplications, setLoadingApplications] = useState(true);
   const [applications, setApplications] = useState<Application[]>([]);
-
+  
   const [form, setForm] = useState({
     applicationId: "",
     title: "",
@@ -53,6 +53,7 @@ export default function CreateUpdatePage() {
       try {
         const res = await fetch("/api/applications?pageSize=50");
 
+        
         if (res.status === 401) {
           router.push("/login");
           return;
@@ -112,7 +113,7 @@ export default function CreateUpdatePage() {
       if (!res.ok) {
         throw new Error("Unable to create update");
       }
-
+      const update = await res.json();
       toast.success("Update created successfully");
 
       setForm({
@@ -123,7 +124,7 @@ export default function CreateUpdatePage() {
         description: "",
       });
 
-      router.push("/updates");
+      router.push(`/updates/${update.id}/editor`);
     } catch (err) {
       console.error(err);
       toast.error("Error creating update");

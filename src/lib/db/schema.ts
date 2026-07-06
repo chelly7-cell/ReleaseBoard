@@ -3,6 +3,7 @@ import {
   boolean,
   index,
   integer,
+  jsonb,
   pgTable,
   serial,
   text,
@@ -138,23 +139,36 @@ export const updates = pgTable(
     id: serial("id").primaryKey(),
 
     title: varchar("title", { length: 255 }).notNull(),
+
     version: varchar("version", { length: 50 }).notNull(),
 
-    status: varchar("status", { length: 20 }).default("published").notNull(),
+    status: varchar("status", { length: 20 })
+      .default("draft")
+      .notNull(),
 
     views: integer("views").default(0).notNull(),
 
     applicationId: integer("application_id")
       .notNull()
-      .references(() => applications.id, { onDelete: "cascade" }),
+      .references(() => applications.id, {
+        onDelete: "cascade",
+      }),
 
+    // Description courte (Card)
     description: text("description").notNull(),
+
+    // Contenu complet Tiptap
+    content: jsonb("content"),
 
     type: varchar("type", { length: 50 }).notNull(),
 
-    publishDate: timestamp("publish_date").defaultNow().notNull(),
+    publishDate: timestamp("publish_date")
+      .defaultNow()
+      .notNull(),
 
-    createdAt: timestamp("created_at").defaultNow().notNull(),
+    createdAt: timestamp("created_at")
+      .defaultNow()
+      .notNull(),
   },
   (table) => [
     index("updates_application_id_idx").on(table.applicationId),
