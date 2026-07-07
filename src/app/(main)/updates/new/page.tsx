@@ -111,7 +111,11 @@ export default function CreateUpdatePage() {
       }
 
       if (!res.ok) {
-        throw new Error("Unable to create update");
+        const errorData = await res.json();
+
+        console.log("API ERROR:", errorData);
+
+        throw new Error(errorData.message || "Unable to create update");
       }
       const update = await res.json();
       toast.success("Update created successfully");
@@ -127,7 +131,7 @@ export default function CreateUpdatePage() {
       router.push(`/updates/${update.id}/editor`);
     } catch (err) {
       console.error(err);
-      toast.error("Error creating update");
+      toast.error(err instanceof Error ? err.message : "Error creating update");
     } finally {
       setLoading(false);
     }

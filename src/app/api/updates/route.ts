@@ -114,8 +114,9 @@ export async function POST(req: NextRequest) {
         description: body.description,
         version: body.version,
         type: body.type,
-        status: body.status,
-        publishDate: body.publishDate,
+
+        status: body.status ?? "draft",
+        publishDate: body.publishDate ?? new Date(),
       })
       .returning();
 
