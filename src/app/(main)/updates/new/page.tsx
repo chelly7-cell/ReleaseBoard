@@ -115,7 +115,9 @@ export default function CreateUpdatePage() {
 
         console.log("API ERROR:", errorData);
 
-        throw new Error(errorData.message || "Unable to create update");
+        throw new Error(
+          errorData.message || errorData.error || "Unable to create update"
+        );
       }
       const update = await res.json();
       toast.success("Update created successfully");

@@ -127,20 +127,29 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(inserted, { status: 201 });
   } catch (error) {
-    if (error instanceof Error && error.message === "UNAUTHORIZED") {
-      return unauthorizedResponse();
-    }
+  if (error instanceof Error && error.message === "UNAUTHORIZED") {
+    return unauthorizedResponse();
+  }
 
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        { error: "Invalid update data", issues: error.issues },
-        { status: 400 },
-      );
-    }
-
+  if (error instanceof ZodError) {
     return NextResponse.json(
-      { error: "Failed to create update" },
-      { status: 500 },
+      { 
+        error: "Invalid update data", 
+        issues: error.issues 
+      },
+      { status: 400 },
     );
   }
+
+  console.error("CREATE UPDATE ERROR:", error);
+
+  return NextResponse.json(
+    {
+      message: error instanceof Error
+        ? error.message
+        : "Failed to create update",
+    },
+    { status: 500 },
+  );
+}
 }
