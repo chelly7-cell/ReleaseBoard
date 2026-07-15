@@ -9,29 +9,22 @@ export type AuthUser = {
   image?: string | null;
 };
 
-type SessionResult = Awaited<ReturnType<typeof auth.api.getSession>>;
 
 export async function getSessionFromHeaders(
   requestHeaders?: Headers,
-): Promise<SessionResult> {
+) {
   return auth.api.getSession({
     headers: requestHeaders ?? (await headers()),
   });
 }
 
-export async function requireAuth(requestHeaders?: Headers): Promise<AuthUser> {
+export async function requireAuth(requestHeaders?: Headers) {
   const session = await getSessionFromHeaders(requestHeaders);
 
-  if (!session?.user?.id) {
+  if(!session){
     throw new Error("UNAUTHORIZED");
   }
-
-  return {
-    id: session.user.id,
-    name: session.user.name,
-    email: session.user.email,
-    image: session.user.image,
-  };
+  return session.user
 }
 
 export function unauthorizedResponse() {

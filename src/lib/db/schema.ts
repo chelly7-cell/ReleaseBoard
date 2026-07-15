@@ -11,7 +11,6 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
 
@@ -27,7 +26,6 @@ export const user = pgTable("user", {
     .$onUpdate(() => new Date())
     .notNull(),
 });
-
 
 export const session = pgTable(
   "session",
@@ -51,9 +49,8 @@ export const session = pgTable(
       .$onUpdate(() => new Date())
       .notNull(),
   },
-  (table) => [index("session_userId_idx").on(table.userId)]
+  (table) => [index("session_userId_idx").on(table.userId)],
 );
-
 
 export const account = pgTable(
   "account",
@@ -83,9 +80,8 @@ export const account = pgTable(
       .$onUpdate(() => new Date())
       .notNull(),
   },
-  (table) => [index("account_userId_idx").on(table.userId)]
+  (table) => [index("account_userId_idx").on(table.userId)],
 );
-
 
 export const verification = pgTable(
   "verification",
@@ -103,9 +99,8 @@ export const verification = pgTable(
       .$onUpdate(() => new Date())
       .notNull(),
   },
-  (table) => [index("verification_identifier_idx").on(table.identifier)]
+  (table) => [index("verification_identifier_idx").on(table.identifier)],
 );
-
 
 export const applications = pgTable(
   "applications",
@@ -129,9 +124,8 @@ export const applications = pgTable(
   (table) => [
     index("applications_user_id_idx").on(table.userId),
     index("applications_name_idx").on(table.name),
-  ]
+  ],
 );
-
 
 export const updates = pgTable(
   "updates",
@@ -142,9 +136,7 @@ export const updates = pgTable(
 
     version: varchar("version", { length: 50 }).notNull(),
 
-    status: varchar("status", { length: 20 })
-      .default("draft")
-      .notNull(),
+    status: varchar("status", { length: 20 }).default("draft").notNull(),
 
     views: integer("views").default(0).notNull(),
 
@@ -164,19 +156,17 @@ export const updates = pgTable(
 
     publishDate: timestamp("publish_date")
       .defaultNow()
+      .$onUpdate(() => new Date())
       .notNull(),
 
-    createdAt: timestamp("created_at")
-      .defaultNow()
-      .notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
     index("updates_application_id_idx").on(table.applicationId),
     index("updates_status_idx").on(table.status),
     index("updates_publish_date_idx").on(table.publishDate),
-  ]
+  ],
 );
-
 
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
@@ -198,13 +188,16 @@ export const accountRelations = relations(account, ({ one }) => ({
   }),
 }));
 
-export const applicationRelations = relations(applications, ({ one, many }) => ({
-  user: one(user, {
-    fields: [applications.userId],
-    references: [user.id],
+export const applicationRelations = relations(
+  applications,
+  ({ one, many }) => ({
+    user: one(user, {
+      fields: [applications.userId],
+      references: [user.id],
+    }),
+    updates: many(updates),
   }),
-  updates: many(updates),
-}));
+);
 
 export const updateRelations = relations(updates, ({ one }) => ({
   application: one(applications, {
@@ -212,7 +205,6 @@ export const updateRelations = relations(updates, ({ one }) => ({
     references: [applications.id],
   }),
 }));
-
 
 export type Application = typeof applications.$inferSelect;
 export type NewApplication = typeof applications.$inferInsert;

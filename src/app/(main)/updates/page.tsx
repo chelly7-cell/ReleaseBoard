@@ -77,9 +77,9 @@ export default function UpdatesPage() {
     });
   }, [updates, search]);
 
-  const released = updates.filter(
-    (u) => u.status.toLowerCase() === "released"
-  ).length;
+  const published = updates.filter(
+      (u) => u.status.toLowerCase() === "published"
+    ).length;
 
   const draft = updates.filter(
     (u) => u.status.toLowerCase() === "draft"
@@ -189,7 +189,7 @@ export default function UpdatesPage() {
                 </p>
 
                 <h2 className="text-3xl font-bold mt-2">
-                  {released}
+                  {published}
                 </h2>
 
               </div>
@@ -268,13 +268,20 @@ export default function UpdatesPage() {
 
                   <div className="flex items-center gap-5">
 
-                    <Image
-                      src={u.applicationLogo}
-                      alt={u.applicationName}
-                      width={64}
-                      height={64}
-                      className="rounded-2xl border object-cover"
-                    />
+                    {u.applicationLogo ? (
+                      <Image
+                        src={u.applicationLogo}
+                        alt={u.applicationName}
+                        width={64}
+                        height={64}
+                        className="rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center">
+                        {u.applicationName.charAt(0)}
+                      </div>
+                    )}Name="rounded-2xl border object-cover"
+                    
 
                     <div>
 
@@ -316,7 +323,7 @@ export default function UpdatesPage() {
 
                     <Button asChild variant="outline">
                       <Link
-                        href={`/applications/${u.id}`}
+                        href={`/updates/${u.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
                       >

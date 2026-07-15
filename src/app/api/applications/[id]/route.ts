@@ -1,66 +1,74 @@
 import { NextRequest, NextResponse } from "next/server";
 import { and, desc, eq } from "drizzle-orm";
+
 import { db } from "@/lib/db";
 import { applications, updates } from "@/lib/db/schema";
-import { requireAuth, unauthorizedResponse } from "@/lib/server-auth";
-import { parseNumericId, parsePagination } from "@/lib/validations/api";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await requireAuth(req.headers);
     const { id } = await params;
-    const appId = parseNumericId(id);
+    const appId = Number(id);
 
     if (!appId) {
       return NextResponse.json(
         { error: "Invalid application id" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     const [application] = await db
-      .select()
+      .select({
+        id: applications.id,
+        name: applications.name,
+        logo: applications.logo,
+        views: applications.views,
+        description: applications.description,
+      })
       .from(applications)
-      .where(and(eq(applications.id, appId), eq(applications.userId, user.id)))
+      .where(eq(applications.id, appId))
       .limit(1);
 
     if (!application) {
       return NextResponse.json(
         { error: "Application not found" },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
-    const { searchParams } = new URL(req.url);
-    const { page, pageSize, offset } = parsePagination(searchParams);
-
     const appUpdates = await db
-      .select()
+      .select({
+        id: updates.id,
+        applicationId: updates.applicationId,
+        title: updates.title,
+        version: updates.version,
+        description: updates.description,
+        type: updates.type,
+        content: updates.content,
+        status: updates.status,
+        publishDate: updates.publishDate,
+      })
       .from(updates)
-      .where(eq(updates.applicationId, appId))
-      .orderBy(desc(updates.publishDate))
-      .limit(pageSize)
-      .offset(offset);
+      .where(
+        and(
+          eq(updates.applicationId, appId),
+          eq(updates.status, "published")
+        )
+      )
+      .orderBy(desc(updates.publishDate));
 
     return NextResponse.json({
       application,
       updates: appUpdates,
-      page,
-      pageSize,
     });
-  } catch (error) {
-    if (error instanceof Error && error.message === "UNAUTHORIZED") {
-      return unauthorizedResponse();
-    }
-
+  } catch {
     return NextResponse.json(
-      { error: "Failed to fetch application" },
-      { status: 500 },
+      { error: "Failed to fetch changelog" },
+      { status: 500 }
     );
   }
 }

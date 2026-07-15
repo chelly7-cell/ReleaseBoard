@@ -103,10 +103,12 @@ const handleCreate = async () => {
     const res = await fetch("/api/applications", {
       method: "POST",
       credentials: "include",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
         name,
-        logo: logo || null, // ✅ IMPORTANT FIX
+        logo: logo || null,
       }),
     });
 
@@ -115,11 +117,18 @@ const handleCreate = async () => {
       return;
     }
 
-    if (!res.ok) throw new Error();
+    if (!res.ok) {
+      throw new Error("Failed to create application");
+    }
 
+    const application = await res.json();
+
+    // Clear the form
     setName("");
     setLogo("");
-    await loadApplications();
+
+    // Redirect to the new application's page
+    router.push(`/applications/${application.id}`);
   } catch {
     setError("Failed to create application");
   }

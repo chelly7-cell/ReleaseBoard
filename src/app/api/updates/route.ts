@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
           description: updates.description,
           applicationId: updates.applicationId,
           applicationName: applications.name,
-          applicationLogo: applications.logo
+          applicationLogo: applications.logo ?? null
         })
         .from(updates)
         .innerJoin(applications, eq(updates.applicationId, applications.id))
@@ -126,30 +126,26 @@ export async function POST(req: NextRequest) {
       .where(eq(applications.id, body.applicationId));
 
     return NextResponse.json(inserted, { status: 201 });
-  } catch (error) {
-  if (error instanceof Error && error.message === "UNAUTHORIZED") {
-    return unauthorizedResponse();
-  }
+  }  catch (error) {
+  console.error("CREATE UPDATE ERROR FULL:");
+  console.error(error);
 
   if (error instanceof ZodError) {
     return NextResponse.json(
-      { 
-        error: "Invalid update data", 
-        issues: error.issues 
+      {
+        error: "Invalid update data",
+        issues: error.issues,
       },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
-  console.error("CREATE UPDATE ERROR:", error);
-
   return NextResponse.json(
     {
-      message: error instanceof Error
-        ? error.message
-        : "Failed to create update",
+      error: "Database error",
+      details: error instanceof Error ? error.message : error,
     },
-    { status: 500 },
+    { status: 500 }
   );
-}
+} 
 }

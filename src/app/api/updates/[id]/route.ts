@@ -3,10 +3,7 @@ import { and, eq } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import { applications, updates } from "@/lib/db/schema";
-import {
-  requireAuth,
-  unauthorizedResponse,
-} from "@/lib/server-auth";
+import { requireAuth, unauthorizedResponse } from "@/lib/server-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(req.headers);
@@ -36,16 +33,8 @@ export async function GET(
         applicationId: updates.applicationId,
       })
       .from(updates)
-      .innerJoin(
-        applications,
-        eq(updates.applicationId, applications.id)
-      )
-      .where(
-        and(
-          eq(updates.id, updateId),
-          eq(applications.userId, user.id)
-        )
-      )
+      .innerJoin(applications, eq(updates.applicationId, applications.id))
+      .where(and(eq(updates.id, updateId), eq(applications.userId, user.id)))
       .limit(1);
 
     if (!update) {
@@ -55,7 +44,7 @@ export async function GET(
         },
         {
           status: 404,
-        }
+        },
       );
     }
 
@@ -69,7 +58,7 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(req.headers);
@@ -85,16 +74,8 @@ export async function PATCH(
         id: updates.id,
       })
       .from(updates)
-      .innerJoin(
-        applications,
-        eq(updates.applicationId, applications.id)
-      )
-      .where(
-        and(
-          eq(updates.id, updateId),
-          eq(applications.userId, user.id)
-        )
-      )
+      .innerJoin(applications, eq(updates.applicationId, applications.id))
+      .where(and(eq(updates.id, updateId), eq(applications.userId, user.id)))
       .limit(1);
 
     if (!exists) {
@@ -104,25 +85,47 @@ export async function PATCH(
         },
         {
           status: 404,
-        }
+        },
       );
     }
 
     const [updated] = await db
       .update(updates)
       .set({
-        title: body.title,
-        version: body.version,
-        description: body.description,
-        content: body.content,
-        status: body.status,
-        type: body.type,
+        ...(body.title && {
+          title: body.title,
+        }),
+
+        ...(body.version && {
+          version: body.version,
+        }),
+
+        ...(body.description && {
+          description: body.description,
+        }),
+
+        ...(body.content && {
+          content: body.content,
+        }),
+
+        ...(body.status && {
+          status: body.status,
+        }),
+
+        ...(body.type && {
+          type: body.type,
+        }),
+
+        ...(body.publishDate && {
+          publishDate: body.publishDate,
+        }),
       })
       .where(eq(updates.id, updateId))
       .returning();
 
     return NextResponse.json(updated);
-  } catch {
+  } catch (error) {
+    console.log(error);
     return unauthorizedResponse();
   }
 }
@@ -131,7 +134,7 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(req.headers);
@@ -145,16 +148,8 @@ export async function DELETE(
         id: updates.id,
       })
       .from(updates)
-      .innerJoin(
-        applications,
-        eq(updates.applicationId, applications.id)
-      )
-      .where(
-        and(
-          eq(updates.id, updateId),
-          eq(applications.userId, user.id)
-        )
-      )
+      .innerJoin(applications, eq(updates.applicationId, applications.id))
+      .where(and(eq(updates.id, updateId), eq(applications.userId, user.id)))
       .limit(1);
 
     if (!exists) {
@@ -164,13 +159,11 @@ export async function DELETE(
         },
         {
           status: 404,
-        }
+        },
       );
     }
 
-    await db
-      .delete(updates)
-      .where(eq(updates.id, updateId));
+    await db.delete(updates).where(eq(updates.id, updateId));
 
     return NextResponse.json({
       success: true,
