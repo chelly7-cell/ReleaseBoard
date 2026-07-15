@@ -3,13 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
-import Hero from "@/app/(main)/changelog/[applicationId]/components/Hero";
-import Sidebar from "@/app/(main)/changelog/[applicationId]/components/Sidebar";
-import ReleaseCard from "@/app/(main)/changelog/[applicationId]/components/ReleaseCard";
-import EmptyState from "@/app/(main)/changelog/[applicationId]/components/EmptyState";
-import Stats from "@/app/(main)/changelog/[applicationId]/components/Stats";
-import Footer from "@/app/(main)/changelog/[applicationId]/components/Footer";
-import SearchBar from "@/app/(main)/changelog/[applicationId]/components/SearchBar";
+import Hero from "@/app/changelog/[applicationId]/components/Hero";
+import Sidebar from "@/app/changelog/[applicationId]/components/Sidebar";
+import ReleaseCard from "@/app/changelog/[applicationId]/components/ReleaseCard";
+import EmptyState from "@/app/changelog/[applicationId]/components/EmptyState";
+import Stats from "@/app/changelog/[applicationId]/components/Stats";
+import Footer from "@/app/changelog/[applicationId]/components/Footer";
+import SearchBar from "@/app/changelog/[applicationId]/components/SearchBar";
 
 type Application = {
   id:number;
