@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { eq, and } from "drizzle-orm";
 
 import { db } from "@/lib/db";
-import { applications, updates } from "@/lib/db/schema";
+import { applications, updates, analyticsEvents } from "@/lib/db/schema";
 
 
 export async function GET(
@@ -37,6 +37,10 @@ export async function GET(
         }
       );
     }
+    await db.insert(analyticsEvents).values({
+      applicationId: appId,
+      type: "changelog_view",
+    });
 
 
     const publicUpdates = await db

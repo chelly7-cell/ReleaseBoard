@@ -1,105 +1,339 @@
 "use client";
 
-import { Calendar, FileText, Tag, Globe } from "lucide-react";
+import {
+  CalendarDays,
+  FileText,
+  Layers,
+  Rocket,
+  Tag,
+} from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-interface EditorSidebarProps {
-  update: {
-    version: string;
-    status: string;
-    type?: string;
-    publishDate?: string | null;
-  };
+interface Update {
+  id: string;
+  title: string;
+  version: string;
+  status: string;
+  type?: string;
+  publishDate?: string | null;
+  applicationId: number;
 }
+
+interface EditorSidebarProps {
+  update: Update;
+}
+
 
 export default function EditorSidebar({
   update,
 }: EditorSidebarProps) {
+
+
+  const publishDate = update.publishDate
+    ? new Date(update.publishDate).toLocaleDateString(
+        undefined,
+        {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        }
+      )
+    : "Not published";
+
+
+
   return (
-    <aside className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">
-            Release Information
-          </CardTitle>
-        </CardHeader>
+    <div
+      className="
+        space-y-6
+      "
+    >
 
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-3">
-            <Tag className="h-4 w-4 text-muted-foreground" />
 
-            <div>
-              <p className="text-sm text-muted-foreground">
-                Version
-              </p>
+      {/* Release Overview */}
+      <div
+        className="
+          space-y-3
+        "
+      >
 
-              <p className="font-medium">
-                {update.version}
-              </p>
-            </div>
-          </div>
+        <div
+          className="
+            flex
+            items-center
+            gap-2
+            text-sm
+            font-semibold
+          "
+        >
 
-          <div className="flex items-center gap-3">
-            <FileText className="h-4 w-4 text-muted-foreground" />
+          <Rocket
+            className="
+              h-4
+              w-4
+              text-primary
+            "
+          />
 
-            <div>
-              <p className="text-sm text-muted-foreground">
-                Type
-              </p>
+          Release
 
-              <p className="font-medium">
-                {update.type || "Release"}
-              </p>
-            </div>
-          </div>
+        </div>
 
-          <div className="flex items-center gap-3">
-            <Globe className="h-4 w-4 text-muted-foreground" />
 
-            <div>
-              <p className="text-sm text-muted-foreground">
-                Status
-              </p>
+        <div
+          className="
+            rounded-2xl
 
-              <Badge>
+            border
+
+            bg-muted/30
+
+            p-4
+
+            space-y-4
+          "
+        >
+
+          <InfoRow
+            icon={<Tag />}
+            label="Version"
+            value={`v${update.version}`}
+          />
+
+
+          <InfoRow
+            icon={<Layers />}
+            label="Status"
+            value={
+              <Badge
+                className="
+                  rounded-lg
+
+                  capitalize
+                "
+              >
                 {update.status}
               </Badge>
-            </div>
-          </div>
+            }
+          />
 
-          <div className="flex items-center gap-3">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
 
-            <div>
-              <p className="text-sm text-muted-foreground">
-                Publish Date
-              </p>
 
-              <p className="font-medium">
-                {update.publishDate
-                  ? new Date(update.publishDate).toLocaleDateString()
-                  : "Not published"}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          <InfoRow
+            icon={<FileText />}
+            label="Type"
+            value={
+              update.type || "Update"
+            }
+          />
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">
-            Publishing
-          </CardTitle>
-        </CardHeader>
+        </div>
 
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Publish this update to make it visible on your public changelog page.
+
+      </div>
+
+
+
+
+
+
+      {/* Publish Information */}
+      <div
+        className="
+          space-y-3
+        "
+      >
+
+        <div
+          className="
+            flex
+            items-center
+            gap-2
+            text-sm
+            font-semibold
+          "
+        >
+
+          <CalendarDays
+            className="
+              h-4
+              w-4
+              text-primary
+            "
+          />
+
+          Timeline
+
+        </div>
+
+
+
+        <div
+          className="
+            rounded-2xl
+
+            border
+
+            bg-muted/30
+
+            p-4
+          "
+        >
+
+          <p
+            className="
+              text-xs
+
+              text-muted-foreground
+            "
+          >
+            Published date
           </p>
-        </CardContent>
-      </Card>
-    </aside>
+
+
+          <p
+            className="
+              mt-1
+
+              text-sm
+
+              font-medium
+            "
+          >
+            {publishDate}
+          </p>
+
+
+        </div>
+
+
+      </div>
+
+
+
+
+
+
+      {/* Application */}
+      <div
+        className="
+          rounded-2xl
+
+          border
+
+          bg-primary/5
+
+          p-4
+        "
+      >
+
+        <p
+          className="
+            text-xs
+
+            text-muted-foreground
+          "
+        >
+          Application ID
+        </p>
+
+
+        <p
+          className="
+            mt-1
+
+            font-mono
+
+            text-sm
+
+            font-medium
+          "
+        >
+          #{update.applicationId}
+        </p>
+
+
+      </div>
+
+
+    </div>
+  );
+}
+
+
+
+
+
+function InfoRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+}) {
+
+  return (
+    <div
+      className="
+        flex
+
+        items-center
+
+        justify-between
+
+        gap-3
+      "
+    >
+
+      <div
+        className="
+          flex
+
+          items-center
+
+          gap-2
+
+          text-sm
+
+          text-muted-foreground
+        "
+      >
+
+        <span
+          className="
+            [&>svg]:
+            h-4
+
+            [&>svg]:
+            w-4
+          "
+        >
+          {icon}
+        </span>
+
+
+        {label}
+
+      </div>
+
+
+
+      <div
+        className="
+          text-sm
+
+          font-medium
+        "
+      >
+
+        {value}
+
+      </div>
+
+
+    </div>
   );
 }

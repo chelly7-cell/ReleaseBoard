@@ -1,51 +1,56 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
-import Link from "next/link";
+import {
+  AlertCircle,
+  FolderOpen,
+  Plus,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 
-type Application = {
-  id: number;
-  name: string;
-  logo: string | null;
-  views: number;
-};
+import ApplicationHero from "@/components/application/ApplicationHero";
+import ApplicationStats from "@/components/application/ApplicationStats";
+import ApplicationSkeleton from "@/components/application/ApplicationSkeleton";
+import EmptyUpdates from "@/components/application/EmptyUpdates";
+import UpdateCard from "@/components/application/UpdateCard";
 
-type Update = {
-  id: number;
-  title: string;
-  version: string;
-  status: string;
-};
-
-type ApplicationDetailsResponse = {
-  application: Application;
-  updates: Update[];
-};
+import type {
+  Application,
+  ApplicationDetailsResponse,
+  Update,
+} from "@/components/application/types";
 
 export default function ApplicationDetailsPage() {
   const { id } = useParams();
   const router = useRouter();
-  const [app, setApp] = useState<Application | null>(null);
-  const [updates, setUpdates] = useState<Update[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+
+  const [application, setApplication] =
+    useState<Application | null>(null);
+
+  const [updates, setUpdates] =
+    useState<Update[]>([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
 
-      const res = await fetch(`/api/applications/${id}`);
+      const res = await fetch(`/api/applications/${id}`, {
+        cache: "no-store",
+      });
 
       if (res.status === 401) {
         router.push("/login");
@@ -58,82 +63,171 @@ export default function ApplicationDetailsPage() {
       }
 
       if (!res.ok) {
-        throw new Error("Unable to load application");
+        throw new Error("Failed to load application");
       }
 
-      const data = (await res.json()) as ApplicationDetailsResponse;
+      const data =
+        (await res.json()) as ApplicationDetailsResponse;
 
-      setApp(data.application);
+      setApplication(data.application);
       setUpdates(data.updates);
-    } catch (error) {
-      console.error(error);
-      setError("Unable to load application. Please try again.");
+    } catch (err) {
+      console.error(err);
+
+      setError(
+        "Something went wrong while loading this application."
+      );
     } finally {
       setLoading(false);
     }
   }, [id, router]);
 
   useEffect(() => {
-    if (id) loadData();
+    if (id) {
+      loadData();
+    }
   }, [id, loadData]);
 
-  if (loading) return <p className="p-6">Loading...</p>;
+  const publishedUpdates = useMemo(
+    () =>
+      updates.filter(
+        (u) => u.status === "published"
+      ).length,
+    [updates]
+  );
 
-  if (error || !app) {
-    return <p className="p-6 text-muted-foreground">{error}</p>;
+  const draftUpdates = useMemo(
+    () =>
+      updates.filter(
+        (u) => u.status !== "published"
+      ).length,
+    [updates]
+  );
+
+  if (loading) {
+    return (
+      <div className="container mx-auto max-w-7xl p-6">
+        <ApplicationSkeleton />
+      </div>
+    );
   }
 
-  return (
-    <div className="p-6 space-y-6">
-      {/* HEADER */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-3">
-          {app.logo ? (
-            <img
-              src={app.logo}
-              alt={app.name}
-              className="w-10 h-10 rounded"
-            />
-          ) : (
-            <div className="w-10 h-10 rounded bg-muted flex items-center justify-center text-xs">
-              APP
+  if (!application || error) {
+    return (
+      <div className="container mx-auto max-w-3xl p-6">
+        <Card className="rounded-3xl border-red-200">
+          <CardContent className="flex flex-col items-center justify-center py-20 text-center">
+
+            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
+
+              <AlertCircle className="h-10 w-10 text-red-600" />
+
             </div>
-          )}
 
-          {app.name}
-        </CardTitle>
-        </CardHeader>
+            <h2 className="mb-2 text-3xl font-bold">
+              Unable to load application
+            </h2>
 
-        <CardContent className="flex gap-4">
-          <p>Views: {app.views ?? 0}</p>
-          <p>Updates: {updates.length}</p>
+            <p className="mb-8 max-w-md text-muted-foreground">
+              {error}
+            </p>
 
-            <Link href="/updates/new">
-              <Button>
-                Create Update
-              </Button>
-            </Link>
-        </CardContent>
-      </Card>
+            <Button
+              onClick={loadData}
+              size="lg"
+              className="rounded-xl"
+            >
+              Try Again
+            </Button>
 
-      {/* UPDATES LIST */}
-      <div className="space-y-3">
-        {updates.map((u) => (
-          <Card key={u.id}>
-            <CardContent className="p-4 flex justify-between">
-              <div>
-                <p className="font-semibold">{u.title}</p>
-                <p className="text-sm text-gray-500">
-                  Version: {u.version}
-                </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+    return (
+    <main className="container mx-auto max-w-7xl space-y-8 p-6">
+
+      {/* HERO */}
+      <ApplicationHero
+        application={application}
+        updatesCount={updates.length}
+      />
+
+
+      {/* STATS */}
+      <ApplicationStats
+        views={application.views}
+        totalUpdates={updates.length}
+        publishedUpdates={publishedUpdates}
+        draftUpdates={draftUpdates}
+      />
+
+
+      {/* UPDATES SECTION */}
+      <section className="space-y-6">
+
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+          <div>
+            <div className="flex items-center gap-3">
+
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-lg">
+                <FolderOpen className="h-5 w-5" />
               </div>
 
-              <span className="text-sm">{u.status}</span>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
+              <h2 className="text-3xl font-bold tracking-tight">
+                Releases
+              </h2>
+
+            </div>
+
+            <p className="mt-2 text-muted-foreground">
+              Manage your application updates and release notes.
+            </p>
+          </div>
+
+
+          <Button
+            asChild
+            className="rounded-xl shadow-lg transition-all hover:scale-[1.02]"
+          >
+            <a href="/applications/updates/new">
+              <Plus className="mr-2 h-4 w-4" />
+              New Update
+            </a>
+          </Button>
+
+        </div>
+
+
+        {updates.length === 0 ? (
+
+          <EmptyUpdates
+            applicationId={application.id}
+          />
+
+        ) : (
+
+          <div className="space-y-5">
+
+            {updates.map((update) => (
+              <UpdateCard
+                key={update.id}
+                update={update}
+              />
+            ))}
+
+          </div>
+
+        )}
+
+      </section>
+
+
+      {/* FOOTER SPACE */}
+      <div className="h-10" />
+
+    </main>
   );
 }

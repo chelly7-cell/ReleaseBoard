@@ -43,7 +43,7 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="border-b px-6 py-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white font-bold">
+          <div className="flex h-10 w-10 items-center justify-center shadow-sm rounded-xl bg-primary from-violet-500 to-indigo-600 text-white font-bold">
             R
           </div>
 
@@ -58,8 +58,8 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <div className="flex-1 p-4">
-        <p className="mb-3 px-3 text-xs font-medium uppercase text-muted-foreground">
-          Navigation
+        <p className="mb-3 px-3 text-[11px] tracking-[0.22em] font-semibold uppercase text-muted-foreground">
+          MAIN
         </p>
 
         <nav className="space-y-1">
@@ -72,10 +72,10 @@ export default function Sidebar() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "group flex items-center justify-between rounded-xl px-3 py-2.5 text-sm transition-all",
-                  active
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-muted"
+                    "group flex items-center rounded-xl px-3 py-2.5 transition-all duration-200",
+                    active
+                        ? "bg-primary/10 text-primary border border-primary/10 shadow-sm"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
                 <div className="flex items-center gap-3">
@@ -83,14 +83,21 @@ export default function Sidebar() {
                   {item.label}
                 </div>
 
-                <ChevronRight className="h-4 w-4 opacity-40" />
+                <ChevronRight
+                className={cn(
+                "h-4 w-4 transition",
+                active
+                ? "opacity-100"
+                : "opacity-0 group-hover:opacity-50"
+                )}
+                />
               </Link>
             );
           })}
         </nav>
 
         {/* Pro Card */}
-        <div className="mt-8 rounded-2xl border p-4">
+        <div className="mt-8 rounded-xl shadow-sm border p-4">
           <p className="text-xs text-muted-foreground">PRO PLAN</p>
 
           <h3 className="mt-2 font-semibold">Grow Faster</h3>

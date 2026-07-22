@@ -1,109 +1,311 @@
 "use client";
 
 import {
-  FileText,
-  Clock,
-  Type,
   AlignLeft,
-  Database,
+  BookOpen,
+  Clock3,
+  FileText,
 } from "lucide-react";
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import type { ReactNode } from "react";
+
 
 interface EditorStatsProps {
   content: string;
 }
 
+
 export default function EditorStats({
   content,
 }: EditorStatsProps) {
-  const text = content
-    .replace(/["{}[\],:]/g, " ")
+
+  const stats = calculateStats(content);
+
+
+  return (
+    <div
+      className="
+        grid
+        gap-4
+        sm:grid-cols-2
+        xl:grid-cols-4
+      "
+    >
+
+      <StatCard
+        icon={<FileText />}
+        label="Words"
+        value={stats.words}
+      />
+
+
+      <StatCard
+        icon={<AlignLeft />}
+        label="Characters"
+        value={stats.characters}
+      />
+
+
+      <StatCard
+        icon={<Clock3 />}
+        label="Reading time"
+        value={
+          stats.words === 0
+            ? "0 min"
+            : `${stats.readingTime} min`
+        }
+      />
+
+
+      <StatCard
+        icon={<BookOpen />}
+        label="Paragraphs"
+        value={stats.paragraphs}
+      />
+
+    </div>
+  );
+}
+
+
+
+
+
+function StatCard({
+  icon,
+  label,
+  value,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string | number;
+}) {
+
+
+  return (
+    <div
+      className="
+        group
+        rounded-2xl
+        border
+        bg-background/70
+        p-5
+        transition-all
+        duration-300
+        hover:-translate-y-1
+        hover:shadow-lg
+      "
+    >
+
+      <div
+        className="
+          flex
+          items-center
+          justify-between
+        "
+      >
+
+        <div
+          className="
+            flex
+            h-10
+            w-10
+            items-center
+            justify-center
+            rounded-xl
+            bg-primary/10
+            text-primary
+          "
+        >
+          {icon}
+        </div>
+
+
+      </div>
+
+
+      <div
+        className="
+          mt-5
+        "
+      >
+
+        <p
+          className="
+            text-2xl
+            font-semibold
+            tracking-tight
+          "
+        >
+          {value}
+        </p>
+
+
+        <p
+          className="
+            mt-1
+            text-sm
+            text-muted-foreground
+          "
+        >
+          {label}
+        </p>
+
+
+      </div>
+
+
+    </div>
+  );
+}
+
+
+
+
+
+function calculateStats(content: string) {
+
+
+  if (!content) {
+    return {
+      words: 0,
+      characters: 0,
+      paragraphs: 0,
+      readingTime: 0,
+    };
+  }
+
+
+
+  let text = content;
+
+
+
+  try {
+
+    const parsed = JSON.parse(content);
+
+
+    text = extractTextFromTipTap(parsed);
+
+
+  } catch {
+
+    text = content
+      .replace(/<[^>]*>/g, " ");
+
+  }
+
+
+
+  const cleanText = text
     .replace(/\s+/g, " ")
     .trim();
 
-  const characters = text.length;
 
-  const words = text
-    ? text.split(" ").length
-    : 0;
 
-  const readingTime = Math.max(
-    1,
-    Math.ceil(words / 200)
-  );
+  const words =
+    cleanText.length === 0
+      ? 0
+      : cleanText.split(" ").length;
 
-  const paragraphs = (content.match(/paragraph/g) || []).length;
 
-  const size = new Blob([content]).size;
 
-  const sizeLabel = size > 1024
-    ? `${(size / 1024).toFixed(1)} KB`
-    : `${size} B`;
+  const characters =
+    cleanText.length;
 
-  const stats = [
-    {
-      title: "Characters",
-      value: characters.toLocaleString(),
-      icon: Type,
-    },
-    {
-      title: "Words",
-      value: words.toLocaleString(),
-      icon: FileText,
-    },
-    {
-      title: "Reading time",
-      value: `${readingTime} min`,
-      icon: Clock,
-    },
-    {
-      title: "Paragraphs",
-      value: paragraphs.toString(),
-      icon: AlignLeft,
-    },
-    {
-      title: "Document size",
-      value: sizeLabel,
-      icon: Database,
-    },
-  ];
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">
-          Editor statistics
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {stats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <div
-                key={stat.title}
-                className="rounded-xl border bg-muted/30 p-4 transition hover:bg-muted/50"
-              >
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Icon className="h-4 w-4" />
-                  <span className="text-xs">
-                    {stat.title}
-                  </span>
-                </div>
-                <p className="mt-2 text-xl font-semibold">
-                  {stat.value}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
-  );
+
+  const paragraphs =
+    countParagraphs(content);
+
+
+
+  const readingTime =
+    Math.ceil(words / 200);
+
+
+
+  return {
+    words,
+    characters,
+    paragraphs,
+    readingTime,
+  };
+
+}
+
+
+
+
+
+function extractTextFromTipTap(
+  node: any
+): string {
+
+
+  let text = "";
+
+
+  if (node.type === "text") {
+    text += node.text ?? "";
+  }
+
+
+
+  if (node.content) {
+
+    for (const child of node.content) {
+
+      text += " " + extractTextFromTipTap(child);
+
+    }
+
+  }
+
+
+
+  return text;
+
+}
+
+
+
+
+
+function countParagraphs(
+  content: string
+) {
+
+
+  try {
+
+    const json = JSON.parse(content);
+
+
+    if (!json.content) {
+      return 0;
+    }
+
+
+    return json.content.filter(
+      (item: any) =>
+        item.type === "paragraph"
+    ).length;
+
+
+  } catch {
+
+
+    const paragraphs =
+      content
+        .replace(/<[^>]*>/g, "")
+        .split(/\n+/)
+        .filter(Boolean);
+
+
+    return paragraphs.length;
+
+  }
+
 }

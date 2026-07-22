@@ -109,7 +109,7 @@ export const applications = pgTable(
 
     name: text("name").notNull(),
     description: text("description"),
-
+    website: text("website"),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -205,6 +205,64 @@ export const updateRelations = relations(updates, ({ one }) => ({
     references: [applications.id],
   }),
 }));
+
+
+
+export const analyticsEvents = pgTable(
+  "analytics_events",
+  {
+    id: serial("id").primaryKey(),
+
+    applicationId: integer("application_id")
+      .notNull()
+      .references(() => applications.id, {
+        onDelete: "cascade",
+      }),
+
+    updateId: integer("update_id")
+      .references(() => updates.id, {
+        onDelete: "cascade",
+      }),
+
+    type: varchar("type", {
+      length: 50,
+    }).notNull(),
+
+    createdAt: timestamp("created_at")
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("analytics_events_application_id_idx")
+      .on(table.applicationId),
+
+    index("analytics_events_update_id_idx")
+      .on(table.updateId),
+
+    index("analytics_events_created_at_idx")
+      .on(table.createdAt),
+
+    index("analytics_events_type_idx")
+      .on(table.type),
+  ],
+);
+
+export const analyticsEventRelations = relations(
+  analyticsEvents,
+  ({ one }) => ({
+    application: one(applications, {
+      fields: [analyticsEvents.applicationId],
+      references: [applications.id],
+    }),
+
+    update: one(updates, {
+      fields: [analyticsEvents.updateId],
+      references: [updates.id],
+    }),
+  }),
+);
+
+
 
 export type Application = typeof applications.$inferSelect;
 export type NewApplication = typeof applications.$inferInsert;

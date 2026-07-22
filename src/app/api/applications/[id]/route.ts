@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { and, desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db";
-import { applications, updates } from "@/lib/db/schema";
+import {
+  analyticsEvents,
+  applications,
+  updates,
+} from "@/lib/db/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -14,20 +18,41 @@ export async function GET(
     const { id } = await params;
     const appId = Number(id);
 
-    if (!appId) {
+    if (Number.isNaN(appId) || appId <= 0) {
       return NextResponse.json(
-        { error: "Invalid application id" },
-        { status: 400 }
+        {
+          error: "Invalid application id",
+        },
+        {
+          status: 400,
+        }
       );
     }
 
+    // Increment views
+    await db
+      .update(applications)
+      .set({
+        views: sql`${applications.views} + 1`,
+      })
+      .where(eq(applications.id, appId));
+
+    // Analytics event
+    await db.insert(analyticsEvents).values({
+      applicationId: appId,
+      type: "app_view",
+    });
+
+    // Application
     const [application] = await db
       .select({
         id: applications.id,
         name: applications.name,
-        logo: applications.logo,
-        views: applications.views,
         description: applications.description,
+        logo: applications.logo,
+        website: applications.website,
+        views: applications.views,
+        createdAt: applications.createdAt,
       })
       .from(applications)
       .where(eq(applications.id, appId))
@@ -35,11 +60,16 @@ export async function GET(
 
     if (!application) {
       return NextResponse.json(
-        { error: "Application not found" },
-        { status: 404 }
+        {
+          error: "Application not found",
+        },
+        {
+          status: 404,
+        }
       );
     }
 
+    // ALL updates (draft + published)
     const appUpdates = await db
       .select({
         id: updates.id,
@@ -47,28 +77,31 @@ export async function GET(
         title: updates.title,
         version: updates.version,
         description: updates.description,
+        status: updates.status,
         type: updates.type,
         content: updates.content,
-        status: updates.status,
         publishDate: updates.publishDate,
+        createdAt: updates.createdAt,
+        views: updates.views,
       })
       .from(updates)
-      .where(
-        and(
-          eq(updates.applicationId, appId),
-          eq(updates.status, "published")
-        )
-      )
-      .orderBy(desc(updates.publishDate));
+      .where(eq(updates.applicationId, appId))
+      .orderBy(desc(updates.createdAt));
 
     return NextResponse.json({
       application,
       updates: appUpdates,
     });
-  } catch {
+  } catch (error) {
+    console.error(error);
+
     return NextResponse.json(
-      { error: "Failed to fetch changelog" },
-      { status: 500 }
+      {
+        error: "Failed to fetch application",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }

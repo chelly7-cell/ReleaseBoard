@@ -218,7 +218,7 @@ export default function CreateUpdatePage() {
       });
 
 
-      router.push(`/updates/${update.id}/editor`);
+      router.push(`/applications/updates/${update.id}/editor`);
 
 
     } catch (error: any) {
@@ -236,39 +236,78 @@ export default function CreateUpdatePage() {
 
     }
   };  return (
-    <div className="max-w-2xl mx-auto p-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Create Update</CardTitle>
+  <div className="min-h-screen bg-[#11131]from-background via-background to-muted/40 px-4 py-10">
+    <div className="mx-auto max-w-3xl">
+
+      {/* Header */}
+      <div className="mb-8 space-y-2">
+
+        <div className="flex items-center gap-3">
+
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-violet-600 text-white shadow-lg">
+            ✨
+          </div>
+
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Create Update
+            </h1>
+
+            <p className="text-sm text-muted-foreground">
+              Publish a new release for your application
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+
+
+
+      {/* Form Card */}
+      <Card className="border-border/50 bg-background/80 shadow-xl backdrop-blur">
+
+        <CardHeader className="border-b">
+
+          <CardTitle className="text-xl">
+            Release Information
+          </CardTitle>
 
           <CardDescription>
-            Publish a new application update
+            Fill the details below to create your update.
           </CardDescription>
+
         </CardHeader>
 
 
-        <CardContent className="space-y-4">
+
+        <CardContent className="space-y-6 pt-6">
+
 
 
           {/* Application */}
+          <div className="space-y-2">
 
-          <div>
+            <label className="text-sm font-medium">
+              Application
+              <span className="text-red-500 ml-1">*</span>
+            </label>
+
+
             <Select
               value={form.applicationId}
               disabled={loadingApplications}
               onValueChange={async (value) => {
 
-                setForm((prev) => ({
+                setForm((prev)=>({
                   ...prev,
-                  applicationId: value,
+                  applicationId:value
                 }));
 
-
-                setErrors((prev) => ({
+                setErrors((prev)=>({
                   ...prev,
-                  applicationId: "",
+                  applicationId:""
                 }));
-
 
                 try {
 
@@ -276,27 +315,21 @@ export default function CreateUpdatePage() {
                     `/api/updates/latest?applicationId=${value}`
                   );
 
-
                   const data = await res.json();
 
 
-                  setForm((prev) => ({
+                  setForm((prev)=>({
                     ...prev,
-                    applicationId: value,
-                    version: getNextVersion(data.version),
+                    applicationId:value,
+                    version:getNextVersion(data.version)
                   }));
 
+                } catch {
 
-                } catch (error) {
-
-
-                  console.error(error);
-
-
-                  setForm((prev) => ({
+                  setForm((prev)=>({
                     ...prev,
-                    applicationId: value,
-                    version: "1.0.0",
+                    applicationId:value,
+                    version:"1.0.0"
                   }));
 
                 }
@@ -304,13 +337,13 @@ export default function CreateUpdatePage() {
               }}
             >
 
-              <SelectTrigger>
+              <SelectTrigger className="h-11">
 
                 <SelectValue
                   placeholder={
                     loadingApplications
-                      ? "Loading applications..."
-                      : "Select application"
+                    ? "Loading applications..."
+                    : "Choose application"
                   }
                 />
 
@@ -319,24 +352,23 @@ export default function CreateUpdatePage() {
 
               <SelectContent>
 
-                {applications.map((application) => (
-
+                {applications.map((application)=>(
                   <SelectItem
                     key={application.id}
                     value={String(application.id)}
                   >
                     {application.name}
                   </SelectItem>
-
                 ))}
 
               </SelectContent>
+
 
             </Select>
 
 
             {errors.applicationId && (
-              <p className="text-sm text-red-500 mt-1">
+              <p className="text-xs text-red-500">
                 {errors.applicationId}
               </p>
             )}
@@ -345,25 +377,31 @@ export default function CreateUpdatePage() {
 
 
 
-          {/* Title */}
 
-          <div>
+          {/* Title */}
+          <div className="space-y-2">
+
+            <label className="text-sm font-medium">
+              Update Title
+              <span className="text-red-500 ml-1">*</span>
+            </label>
+
 
             <Input
-              placeholder="Update title"
+              className="h-11"
+              placeholder="Example: Added dark mode support"
               value={form.title}
 
-              onChange={(e) => {
+              onChange={(e)=>{
 
                 setForm({
                   ...form,
-                  title: e.target.value,
+                  title:e.target.value
                 });
-
 
                 setErrors({
                   ...errors,
-                  title: "",
+                  title:""
                 });
 
               }}
@@ -371,7 +409,7 @@ export default function CreateUpdatePage() {
 
 
             {errors.title && (
-              <p className="text-sm text-red-500 mt-1">
+              <p className="text-xs text-red-500">
                 {errors.title}
               </p>
             )}
@@ -381,104 +419,117 @@ export default function CreateUpdatePage() {
 
 
 
-          {/* Type */}
-
-          <div>
-
-            <Select
-
-              value={form.type}
-
-              onValueChange={(value) => {
-
-                setForm({
-                  ...form,
-                  type: value,
-                });
+          {/* Type + Version */}
+          <div className="grid gap-5 md:grid-cols-2">
 
 
-                setErrors({
-                  ...errors,
-                  type: "",
-                });
+            <div className="space-y-2">
 
-              }}
-
-            >
-
-              <SelectTrigger>
-
-                <SelectValue placeholder="Select update type" />
-
-              </SelectTrigger>
+              <label className="text-sm font-medium">
+                Update Type
+                <span className="text-red-500 ml-1">*</span>
+              </label>
 
 
-              <SelectContent>
+              <Select
+                value={form.type}
+                onValueChange={(value)=>{
 
-                <SelectItem value="fix">
-                  Bug Fix
-                </SelectItem>
+                  setForm({
+                    ...form,
+                    type:value
+                  });
 
+                  setErrors({
+                    ...errors,
+                    type:""
+                  });
 
-                <SelectItem value="feature">
-                  Feature
-                </SelectItem>
+                }}
+              >
 
+                <SelectTrigger className="h-11">
 
-                <SelectItem value="improvement">
-                  Improvement
-                </SelectItem>
+                  <SelectValue placeholder="Select type"/>
 
-
-              </SelectContent>
-
-            </Select>
-
-
-            {errors.type && (
-              <p className="text-sm text-red-500 mt-1">
-                {errors.type}
-              </p>
-            )}
-
-          </div>
+                </SelectTrigger>
 
 
+                <SelectContent>
+
+                  <SelectItem value="feature">
+                    🚀 Feature
+                  </SelectItem>
+
+                  <SelectItem value="improvement">
+                    ⚡ Improvement
+                  </SelectItem>
+
+                  <SelectItem value="fix">
+                    🐛 Bug Fix
+                  </SelectItem>
+
+                </SelectContent>
+
+
+              </Select>
+
+
+              {errors.type && (
+                <p className="text-xs text-red-500">
+                  {errors.type}
+                </p>
+              )}
+
+            </div>
 
 
 
-          {/* Version */}
 
-          <div>
-
-            <Input
-              placeholder="Version (e.g. 1.0.1)"
-
-              value={form.version}
+            <div className="space-y-2">
 
 
-              onChange={(e) => {
-
-                setForm({
-                  ...form,
-                  version: e.target.value,
-                });
+              <label className="text-sm font-medium">
+                Version
+                <span className="text-red-500 ml-1">*</span>
+              </label>
 
 
-                setErrors({
-                  ...errors,
-                  version: "",
-                });
+              <Input
 
-              }}
-            />
+                className="h-11"
+
+                placeholder="1.0.1"
+
+                value={form.version}
 
 
-            {errors.version && (
-              <p className="text-sm text-red-500 mt-1">
-                {errors.version}
-              </p>
-            )}
+                onChange={(e)=>{
+
+                  setForm({
+                    ...form,
+                    version:e.target.value
+                  });
+
+                  setErrors({
+                    ...errors,
+                    version:""
+                  });
+
+                }}
+
+              />
+
+
+              {errors.version && (
+                <p className="text-xs text-red-500">
+                  {errors.version}
+                </p>
+              )}
+
+
+            </div>
+
 
           </div>
 
@@ -488,26 +539,34 @@ export default function CreateUpdatePage() {
 
           {/* Description */}
 
-          <div>
+          <div className="space-y-2">
+
+            <label className="text-sm font-medium">
+              Description
+              <span className="text-red-500 ml-1">*</span>
+            </label>
+
 
             <Textarea
 
-              placeholder="Describe what changed..."
+              className="min-h-[140px] resize-none"
+
+              placeholder="Explain what changed in this release..."
 
               value={form.description}
 
 
-              onChange={(e) => {
+              onChange={(e)=>{
 
                 setForm({
                   ...form,
-                  description: e.target.value,
+                  description:e.target.value
                 });
 
 
                 setErrors({
                   ...errors,
-                  description: "",
+                  description:""
                 });
 
               }}
@@ -516,7 +575,7 @@ export default function CreateUpdatePage() {
 
 
             {errors.description && (
-              <p className="text-sm text-red-500 mt-1">
+              <p className="text-xs text-red-500">
                 {errors.description}
               </p>
             )}
@@ -527,9 +586,24 @@ export default function CreateUpdatePage() {
 
 
 
-          {/* Actions */}
 
-          <div className="flex gap-2">
+          {/* Footer */}
+
+          <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row sm:justify-end">
+
+
+            <Button
+              asChild
+              variant="outline"
+              className="h-11"
+            >
+
+              <Link href="./applications/updates">
+                Cancel
+              </Link>
+
+            </Button>
+
 
 
             <Button
@@ -538,27 +612,15 @@ export default function CreateUpdatePage() {
 
               disabled={loading}
 
-              className="w-full"
+              className="h-11 bg-gradient-to-r from-blue-600 to-violet-600 px-8 text-white shadow-lg hover:opacity-90"
 
             >
 
               {loading
-                ? "Creating..."
-                : "Create Update"
+              ? "Creating..."
+              : "Create Update"
               }
 
-            </Button>
-
-
-
-            <Button
-              asChild
-              variant="outline"
-            >
-
-              <Link href="/updates">
-                Cancel
-              </Link>
 
             </Button>
 
@@ -568,8 +630,10 @@ export default function CreateUpdatePage() {
 
         </CardContent>
 
+
       </Card>
 
+
     </div>
-  );
-}
+  </div>
+)};

@@ -3,10 +3,20 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from "recharts";
+
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 
 import {
   AlertCircle,
@@ -17,7 +27,15 @@ import {
   FileText,
   Eye,
   Pencil,
+  Layers,
 } from "lucide-react";
+
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 import {
   Empty,
@@ -28,270 +46,669 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+
+
 type AnalyticsData = {
+  chartData:{
+    date:string;
+    views:number;
+  }[];
+
   overview: {
     applications: number;
     updates: number;
     published: number;
     drafts: number;
+
+    applicationViews: number;
+    updateViews: number;
+
     totalViews: number;
     averageViews: number;
   };
-  topApplications: any[];
-  topUpdates: any[];
-  recentApplications: any[];
+
+  topApplications:any[];
+  topUpdates:any[];
+  recentApplications:any[];
 };
 
-export default function AnalysePage() {
-  const [data, setData] = useState<AnalyticsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  async function fetchAnalytics() {
-    try {
+export default function AnalyticsPage() {
+
+  const [data,setData] =
+    useState<AnalyticsData | null>(null);
+
+  const [loading,setLoading] =
+    useState(true);
+
+  const [error,setError] =
+    useState<string | null>(null);
+
+
+
+  async function fetchAnalytics(){
+
+    try{
+
       setLoading(true);
       setError(null);
 
-      const res = await fetch("/api/analytics");
-      if (!res.ok) throw new Error("Failed to load analytics");
 
-      const json = await res.json();
+      const res =
+        await fetch("/api/analytics");
+
+
+      if(!res.ok){
+        throw new Error(
+          "Failed to load analytics"
+        );
+      }
+
+
+      const json =
+        await res.json();
+
+
       setData(json);
-    } catch (err: any) {
-      setError(err.message || "Something went wrong");
-    } finally {
+
+
+    }catch(err:any){
+
+      setError(
+        err.message ||
+        "Something went wrong"
+      );
+
+    }finally{
+
       setLoading(false);
+
     }
+
   }
 
-  useEffect(() => {
+
+
+  useEffect(()=>{
+
     fetchAnalytics();
-  }, []);
 
-  // ---------------- LOADING ----------------
-  if (loading) {
+  },[]);
+
+
+
+
+  if(loading){
+
     return (
-      <div className="p-6 space-y-6">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i} className="rounded-2xl">
+
+      <div className="p-6">
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+          {Array.from({
+            length:8
+          }).map((_,i)=>(
+
+            <Card
+              key={i}
+              className="rounded-2xl"
+            >
+
               <CardHeader>
-                <Skeleton className="h-4 w-24" />
+
+                <Skeleton className="h-4 w-24"/>
+
               </CardHeader>
+
+
               <CardContent>
-                <Skeleton className="h-8 w-16" />
+
+                <Skeleton className="h-8 w-16"/>
+
               </CardContent>
+
             </Card>
+
           ))}
+
         </div>
+
       </div>
+
     );
+
   }
 
-  // ---------------- ERROR ----------------
-  if (error) {
+
+
+  if(error){
+
     return (
+
       <div className="p-6 flex justify-center">
-        <Card className="w-full max-w-md border-destructive">
-          <CardContent className="p-6 flex flex-col items-center gap-3 text-center">
-            <AlertCircle className="text-destructive h-6 w-6" />
-            <p className="text-sm text-muted-foreground">{error}</p>
-            <Button onClick={fetchAnalytics} className="w-full">
+
+        <Card className="max-w-md w-full">
+
+          <CardContent className="p-6 flex flex-col items-center gap-4">
+
+            <AlertCircle className="text-destructive"/>
+
+
+            <p className="text-sm text-muted-foreground">
+              {error}
+            </p>
+
+
+            <Button
+              onClick={fetchAnalytics}
+            >
               Retry
             </Button>
+
           </CardContent>
+
         </Card>
+
       </div>
+
     );
+
   }
 
-  // ---------------- EMPTY STATE ----------------
-  if (!data || data.overview.applications === 0) {
+
+
+  if(!data || data.overview.applications===0){
+
     return (
+
       <div className="min-h-[calc(100vh-80px)] flex items-center justify-center px-6">
-        <Empty className="max-w-4xl border bg-background rounded-3xl shadow-sm">
+
+        <Empty className="max-w-4xl border rounded-3xl">
+
           <EmptyHeader>
+
             <EmptyMedia className="bg-primary/10">
-              <BarChart3 className="size-10 text-primary" />
+
+              <BarChart3 className="size-10 text-primary"/>
+
             </EmptyMedia>
 
+
             <EmptyTitle className="text-3xl">
+
               No analytics yet
+
             </EmptyTitle>
 
-            <EmptyDescription className="max-w-xl text-base">
-              Start creating applications and publishing updates to unlock your
-              analytics dashboard. Track views, engagement, and performance in
-              real time.
+
+            <EmptyDescription>
+
+              Create applications and publish updates
+              to start collecting analytics.
+
             </EmptyDescription>
+
+
           </EmptyHeader>
 
+
           <EmptyContent>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button asChild size="lg">
-                <Link href="/applications">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Application
-                </Link>
-              </Button>
 
-              <Button variant="outline" size="lg">
-                <Sparkles className="mr-2 h-4 w-4" />
-                Learn More
-              </Button>
-            </div>
 
-            <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[
-                {
-                  icon: BarChart3,
-                  title: "Real-time analytics",
-                  desc: "Track performance instantly as users interact.",
-                },
-                {
-                  icon: Eye,
-                  title: "Engagement tracking",
-                  desc: "See what users view and interact with most.",
-                },
-                {
-                  icon: TrendingUp,
-                  title: "Growth insights",
-                  desc: "Understand what drives your application growth.",
-                },
-              ].map((item, i) => (
-                <div
-                  key={i}
-                  className="rounded-xl border p-5 bg-muted/20"
-                >
-                  <item.icon className="h-5 w-5 mb-3 text-primary" />
-                  <h3 className="font-medium">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {item.desc}
-                  </p>
-                </div>
-              ))}
-            </div>
+            <Button asChild>
+
+              <Link href="/applications">
+
+                <Plus className="mr-2 h-4 w-4"/>
+
+                Create Application
+
+              </Link>
+
+            </Button>
+
+
           </EmptyContent>
+
+
         </Empty>
+
       </div>
+
     );
+
   }
 
-  const { overview } = data;
 
-  const stats = [
-    { label: "Applications", value: overview.applications, icon: FileText },
-    { label: "Updates", value: overview.updates, icon: Pencil },
-    { label: "Published", value: overview.published, icon: Sparkles },
-    { label: "Drafts", value: overview.drafts, icon: FileText },
-    { label: "Total Views", value: overview.totalViews, icon: Eye },
-    { label: "Avg Views", value: overview.averageViews, icon: TrendingUp },
+  const {overview}=data;
+  const chartConfig = {
+    views:{
+      label:"Views",
+    },
+  };
+    const stats = [
+    {
+      label: "Applications",
+      value: overview.applications,
+      icon: FileText,
+    },
+    {
+      label: "Updates",
+      value: overview.updates,
+      icon: Layers,
+    },
+    {
+      label: "Published",
+      value: overview.published,
+      icon: Sparkles,
+    },
+    {
+      label: "Drafts",
+      value: overview.drafts,
+      icon: Pencil,
+    },
+    {
+      label: "Application Views",
+      value: overview.applicationViews,
+      icon: Eye,
+    },
+    {
+      label: "Update Views",
+      value: overview.updateViews,
+      icon: TrendingUp,
+    },
+    {
+      label: "Total Views",
+      value: overview.totalViews,
+      icon: BarChart3,
+    },
+    {
+      label: "Average Views",
+      value: overview.averageViews,
+      icon: TrendingUp,
+    },
   ];
 
+
   return (
+
     <div className="p-6 space-y-8">
+
+
       {/* HEADER */}
+
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
+
+        <h1 className="text-3xl font-semibold tracking-tight">
           Analytics Dashboard
         </h1>
-        <p className="text-sm text-muted-foreground">
-          Overview of your applications performance and engagement.
+
+
+        <p className="text-sm text-muted-foreground mt-2">
+          Track your applications performance,
+          releases and audience engagement.
         </p>
+
       </div>
 
-      {/* STATS GRID */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {stats.map((s, i) => (
-          <Card key={i} className="rounded-2xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+
+
+      {/* STATS */}
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+        {stats.map((item,index)=>(
+
+          <Card
+            key={index}
+            className="rounded-2xl"
+          >
+
+            <CardHeader
+              className="
+              flex
+              flex-row
+              items-center
+              justify-between
+              pb-2
+              "
+            >
+
               <CardTitle className="text-sm font-medium">
-                {s.label}
+                {item.label}
               </CardTitle>
-              <s.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-semibold">{s.value}</div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
 
-      {/* TOP APPLICATIONS */}
+
+              <item.icon
+                className="
+                h-4
+                w-4
+                text-muted-foreground
+                "
+              />
+
+            </CardHeader>
+
+
+            <CardContent>
+
+              <div className="text-2xl font-bold">
+
+                {item.value}
+
+              </div>
+
+            </CardContent>
+
+
+          </Card>
+
+        ))}
+
+      </div>
+      {/* VIEWS CHART */}
+
       <Card className="rounded-2xl">
-        <CardHeader>
-          <CardTitle>Top Applications</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {data.topApplications.length === 0 ? (
+
+      <CardHeader>
+
+        <CardTitle>
+          Views Over Time
+        </CardTitle>
+
+      </CardHeader>
+
+
+      <CardContent>
+
+        <ChartContainer
+          config={chartConfig}
+          className="h-[300px] w-full"
+        >
+
+          <LineChart
+            data={data.chartData}
+          >
+
+            <CartesianGrid
+              vertical={false}
+            />
+
+            <XAxis
+              dataKey="date"
+            />
+
+            <YAxis />
+
+            <ChartTooltip
+              content={
+                <ChartTooltipContent />
+              }
+            />
+
+            <Line
+              dataKey="views"
+              type="monotone"
+              stroke="currentColor"
+              strokeWidth={2}
+              dot
+            />
+
+          </LineChart>
+
+        </ChartContainer>
+
+      </CardContent>
+
+    </Card>
+
+
+    {/* TOP APPLICATIONS */}
+
+    <Card className="rounded-2xl">
+
+      <CardHeader>
+        <CardTitle>
+          Top Applications
+        </CardTitle>
+      </CardHeader>
+
+        <CardContent className="space-y-4">
+
+
+          {data.topApplications.length===0 ? (
+
             <p className="text-sm text-muted-foreground">
-              No applications data yet.
+              No applications data.
             </p>
-          ) : (
-            data.topApplications.map((app: any, i: number) => (
+
+
+          ):(
+
+            data.topApplications.map((app)=> (
+
               <div
                 key={app.id}
-                className="flex justify-between items-center text-sm"
+                className="
+                flex
+                items-center
+                justify-between
+                border-b
+                last:border-0
+                pb-3
+                "
               >
-                <span>{app.name}</span>
-                <span className="text-muted-foreground">
-                  {app.totalViews} views
-                </span>
+
+                <div>
+
+                  <p className="font-medium">
+                    {app.name}
+                  </p>
+
+
+                  <p className="text-xs text-muted-foreground">
+
+                    {app.updatesCount} updates
+
+                  </p>
+
+                </div>
+
+
+                <div className="flex items-center gap-2 text-sm">
+
+                  <Eye className="h-4 w-4"/>
+
+                  {app.views}
+
+                </div>
+
+
               </div>
+
             ))
+
           )}
+
         </CardContent>
+
       </Card>
+
+
+
+
+
 
       {/* TOP UPDATES */}
+
       <Card className="rounded-2xl">
+
         <CardHeader>
-          <CardTitle>Top Updates</CardTitle>
+
+          <CardTitle>
+            Top Updates
+          </CardTitle>
+
         </CardHeader>
-        <CardContent className="space-y-3">
-          {data.topUpdates.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No updates data yet.
-            </p>
-          ) : (
-            data.topUpdates.map((u: any) => (
-              <div
-                key={u.id}
-                className="flex justify-between items-center text-sm"
-              >
-                <span>{u.title}</span>
-                <span className="text-muted-foreground">{u.views} views</span>
-              </div>
-            ))
-          )}
+
+
+        <CardContent className="space-y-4">
+
+
+          {
+            data.topUpdates.length===0 ? (
+
+              <p className="text-sm text-muted-foreground">
+                No updates data.
+              </p>
+
+
+            ):(
+
+              data.topUpdates.map((update)=>(
+
+                <div
+                  key={update.id}
+                  className="
+                  flex
+                  justify-between
+                  items-center
+                  border-b
+                  last:border-0
+                  pb-3
+                  "
+                >
+
+                  <div>
+
+                    <p className="font-medium">
+                      {update.title}
+                    </p>
+
+
+                    <p className="text-xs text-muted-foreground">
+
+                      {update.applicationName}
+
+                    </p>
+
+                  </div>
+
+
+                  <div className="flex items-center gap-2 text-sm">
+
+                    <Eye className="h-4 w-4"/>
+
+                    {update.views}
+
+                  </div>
+
+
+                </div>
+
+              ))
+
+            )
+          }
+
+
         </CardContent>
+
       </Card>
 
-      {/* RECENT APPS */}
+
+
+
+
+
+      {/* RECENT APPLICATIONS */}
+
+
       <Card className="rounded-2xl">
+
+
         <CardHeader>
-          <CardTitle>Recent Applications</CardTitle>
+
+          <CardTitle>
+            Recent Applications
+          </CardTitle>
+
         </CardHeader>
-        <CardContent className="space-y-3">
-          {data.recentApplications.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No recent applications.
-            </p>
-          ) : (
-            data.recentApplications.map((app: any) => (
-              <div
-                key={app.id}
-                className="flex justify-between items-center text-sm"
-              >
-                <span>{app.name}</span>
-                <span className="text-muted-foreground">
-                  {new Date(app.createdAt).toLocaleDateString()}
-                </span>
-              </div>
-            ))
-          )}
+
+
+
+        <CardContent className="space-y-4">
+
+
+          {
+            data.recentApplications.length===0 ? (
+
+              <p className="text-sm text-muted-foreground">
+                No recent applications.
+              </p>
+
+
+            ):(
+              
+              data.recentApplications.map((app)=>(
+
+                <div
+                  key={app.id}
+                  className="
+                  flex
+                  justify-between
+                  items-center
+                  "
+                >
+
+                  <div>
+
+                    <p className="font-medium">
+                      {app.name}
+                    </p>
+
+
+                    <p className="text-xs text-muted-foreground">
+
+                      {
+                        new Date(
+                          app.createdAt
+                        ).toLocaleDateString()
+                      }
+
+                    </p>
+
+                  </div>
+
+
+                  <div className="text-sm flex gap-2 items-center">
+
+                    <Eye className="h-4 w-4"/>
+
+                    {app.views}
+
+                  </div>
+
+
+                </div>
+
+              ))
+
+            )
+          }
+
+
         </CardContent>
+
+
       </Card>
+
+
     </div>
+
   );
+
 }

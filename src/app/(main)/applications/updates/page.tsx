@@ -114,7 +114,7 @@ export default function UpdatesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#11131]">
       <div className="mx-auto max-w-7xl px-6 py-10">
 
         {/* HERO */}
@@ -145,7 +145,7 @@ export default function UpdatesPage() {
               size="lg"
               className="rounded-xl px-6"
             >
-              <Link href="/updates/new">
+              <Link href="/applications/updates/new">
                 <Plus className="mr-2 h-5 w-5" />
                 Create Update
               </Link>
@@ -280,7 +280,7 @@ export default function UpdatesPage() {
                       <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center">
                         {u.applicationName.charAt(0)}
                       </div>
-                    )}Name="rounded-2xl border object-cover"
+                    )}
                     
 
                     <div>
@@ -323,7 +323,7 @@ export default function UpdatesPage() {
 
                     <Button asChild variant="outline">
                       <Link
-                        href={`/updates/${u.id}`}
+                        href={`/applications/updates/${u.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
                       >

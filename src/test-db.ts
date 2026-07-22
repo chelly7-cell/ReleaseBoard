@@ -1,0 +1,1 @@
+console.log("DATABASE:", process.env.DATABASE_URL);

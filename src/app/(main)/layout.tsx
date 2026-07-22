@@ -15,14 +15,14 @@ export default async function MainLayout({
   }
 
   return (
-    <div className="h-screen bg-background flex overflow-hidden">
+    <div className="flex h-screen bg-muted/30">
       <Sidebar />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-hidden">
         <Topbar />
 
         <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-7xl px-8 py-8">
+          <div className="mx-auto w-full max-w-7xl px-6 py-8 lg:px-8">
             {children}
           </div>
         </main>
