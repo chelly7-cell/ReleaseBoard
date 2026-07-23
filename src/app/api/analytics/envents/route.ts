@@ -1,76 +1,31 @@
-import { NextRequest, NextResponse } from "next/server";
-import { desc, eq, sql } from "drizzle-orm";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { applications, updates } from "@/lib/db/schema";
-import { requireAuth, unauthorizedResponse } from "@/lib/server-auth";
+import { analyticsEvents } from "@/lib/db/schema";
 
-export const dynamic = "force-dynamic";
-
-export async function GET(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const user = await requireAuth(req.headers);
+    const body = await req.json();
 
-    const [
-      applicationCount,
-      updateCount,
-      totalViews,
-      recentUpdates,
-      publishedCount,
-    ] = await Promise.all([
-      db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(applications)
-        .where(eq(applications.userId, user.id)),
-      db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(updates)
-        .innerJoin(applications, eq(updates.applicationId, applications.id))
-        .where(eq(applications.userId, user.id)),
-      db
-        .select({ views: sql<number>`coalesce(sum(${updates.views}), 0)::int` })
-        .from(updates)
-        .innerJoin(applications, eq(updates.applicationId, applications.id))
-        .where(eq(applications.userId, user.id)),
-      db
-        .select({
-          id: updates.id,
-          title: updates.title,
-          version: updates.version,
-          status: updates.status,
-          views: updates.views,
-          createdAt: updates.createdAt,
-          applicationId: updates.applicationId,
-          applicationName: applications.name,
-        })
-        .from(updates)
-        .innerJoin(applications, eq(updates.applicationId, applications.id))
-        .where(eq(applications.userId, user.id))
-        .orderBy(desc(updates.createdAt))
-        .limit(5),
-      db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(updates)
-        .innerJoin(applications, eq(updates.applicationId, applications.id))
-        .where(
-          sql`${applications.userId} = ${user.id} and ${updates.status} = 'published'`,
-        ),
-    ]);
+    await db.insert(analyticsEvents).values({
+      applicationId: body.applicationId,
+      updateId: body.updateId ?? null,
+      type: body.type,
+    });
 
     return NextResponse.json({
-      applications: applicationCount[0]?.count ?? 0,
-      updates: updateCount[0]?.count ?? 0,
-      views: totalViews[0]?.views ?? 0,
-      published: publishedCount[0]?.count ?? 0,
-      recentUpdates,
+      success: true,
     });
+
   } catch (error) {
-    if (error instanceof Error && error.message === "UNAUTHORIZED") {
-      return unauthorizedResponse();
-    }
+    console.error("ANALYTICS EVENT ERROR:", error);
 
     return NextResponse.json(
-      { error: "Failed to fetch dashboard" },
-      { status: 500 },
+      {
+        error: "Failed to save analytics event",
+      },
+      {
+        status: 500,
+      },
     );
   }
 }

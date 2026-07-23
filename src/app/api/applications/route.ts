@@ -46,12 +46,18 @@ export async function GET(req: NextRequest) {
       total: totalResult[0]?.count ?? 0,
     });
   } catch (error) {
+    console.error("GET /api/applications ERROR:");
+    console.error(error);
+
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return unauthorizedResponse();
     }
 
     return NextResponse.json(
-      { error: "Failed to fetch applications" },
+      {
+        error: "Failed to fetch applications",
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 },
     );
   }
@@ -66,8 +72,22 @@ export async function POST(req: NextRequest) {
       .insert(applications)
       .values({
         name: body.name,
-        description: body.description || null,
-        logo: body.logo || null,
+
+        description:
+          body.description || null,
+
+        logo:
+          body.logo || null,
+
+        website:
+          body.website || null,
+
+        githubOwner:
+          body.githubOwner?.trim() || null,
+
+        githubRepo:
+          body.githubRepo?.trim() || null,
+
         userId: user.id,
       })
       .returning();
@@ -78,12 +98,18 @@ export async function POST(req: NextRequest) {
       return unauthorizedResponse();
     }
 
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        { error: "Invalid application data", issues: error.issues },
-        { status: 400 },
-      );
-    }
+if (error instanceof ZodError) {
+  console.error("POST /api/applications Zod Error:");
+  console.error(error.issues);
+
+  return NextResponse.json(
+    {
+      error: "Invalid application data",
+      issues: error.issues,
+    },
+    { status: 400 },
+  );
+}
 
     return NextResponse.json(
       { error: "Failed to create application" },

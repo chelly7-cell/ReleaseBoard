@@ -35,10 +35,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 type Application = {
   id: number;
+
   name: string;
+
   description: string | null;
+
   logo: string | null;
+
+  githubOwner: string | null;
+
+  githubRepo: string | null;
+
   views: number;
+
   updatesCount: number;
 };
 
@@ -64,6 +73,8 @@ export default function ApplicationsPage() {
   const [name, setName] = useState("");
   const [logo, setLogo] = useState("");
 
+  const [githubOwner, setGithubOwner] = useState("");
+  const [githubRepo, setGithubRepo] = useState("");
   const loadApplications = useCallback(async () => {
     try {
       setLoading(true);
@@ -111,9 +122,11 @@ export default function ApplicationsPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name,
-          logo: logo || null,
-        }),
+        name,
+        logo: logo || undefined,
+        githubOwner: githubOwner || undefined,
+        githubRepo: githubRepo || undefined,
+      }),
       });
 
       if (res.status ===401){
@@ -130,6 +143,8 @@ export default function ApplicationsPage() {
       setName("");
       setLogo("");
 
+      setGithubOwner("");
+      setGithubRepo("");
       router.push(`/applications/${application.id}`);
     } catch {
       setError("Failed to create application.");
@@ -231,6 +246,44 @@ export default function ApplicationsPage() {
                       />
 
                     </div>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+                      <div className="space-y-2">
+
+                        <Label>
+                          GitHub Owner
+                        </Label>
+
+                        <Input
+                          placeholder="yassine"
+                          value={githubOwner}
+                          onChange={(e) =>
+                            setGithubOwner(e.target.value)
+                          }
+                          className="h-11 rounded-xl"
+                        />
+
+                      </div>
+
+
+                      <div className="space-y-2">
+
+                        <Label>
+                          GitHub Repository
+                        </Label>
+
+                        <Input
+                          placeholder="releaseboard"
+                          value={githubRepo}
+                          onChange={(e) =>
+                            setGithubRepo(e.target.value)
+                          }
+                          className="h-11 rounded-xl"
+                        />
+
+                      </div>
+
+                    </div>
 
                     <div className="space-y-3">
 
@@ -258,7 +311,7 @@ export default function ApplicationsPage() {
                           <UploadButton
                             endpoint="imageUploader"
                             onClientUploadComplete={(res) => {
-                              setLogo(res?.[0]?.url ?? "");
+                              setLogo(res?.[0]?.ufsUrl ?? "")
                             }}
                             onUploadError={(err) => alert(err.message)}
                           />

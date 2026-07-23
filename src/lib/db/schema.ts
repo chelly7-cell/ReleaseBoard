@@ -108,8 +108,15 @@ export const applications = pgTable(
     id: serial("id").primaryKey(),
 
     name: text("name").notNull(),
+
     description: text("description"),
+
     website: text("website"),
+
+    githubOwner: text("github_owner"),
+
+    githubRepo: text("github_repo"),
+
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -117,14 +124,15 @@ export const applications = pgTable(
     logo: text("logo"),
 
     views: integer("views").default(0).notNull(),
-    updatesCount: integer("updates_count").default(0).notNull(),
 
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-  },
-  (table) => [
-    index("applications_user_id_idx").on(table.userId),
-    index("applications_name_idx").on(table.name),
-  ],
+    updatesCount: integer("updates_count")
+      .default(0)
+      .notNull(),
+
+    createdAt: timestamp("created_at")
+      .defaultNow()
+      .notNull(),
+  }
 );
 
 export const updates = pgTable(
@@ -187,6 +195,29 @@ export const accountRelations = relations(account, ({ one }) => ({
     references: [user.id],
   }),
 }));
+export const subscribers = pgTable(
+  "subscribers",
+  {
+    id: serial("id").primaryKey(),
+
+    email: text("email").notNull(),
+
+    applicationId: integer("application_id")
+      .notNull()
+      .references(() => applications.id, {
+        onDelete: "cascade",
+      }),
+
+    createdAt: timestamp("created_at")
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index(
+      "subscribers_application_id_idx"
+    ).on(table.applicationId),
+  ]
+);
 
 export const applicationRelations = relations(
   applications,
@@ -195,7 +226,23 @@ export const applicationRelations = relations(
       fields: [applications.userId],
       references: [user.id],
     }),
+
     updates: many(updates),
+
+    subscribers: many(subscribers),
+  }),
+);
+export const subscriberRelations = relations(
+  subscribers,
+  ({ one }) => ({
+    application: one(applications, {
+      fields: [
+        subscribers.applicationId,
+      ],
+      references: [
+        applications.id,
+      ],
+    }),
   }),
 );
 
@@ -261,6 +308,7 @@ export const analyticsEventRelations = relations(
     }),
   }),
 );
+
 
 
 

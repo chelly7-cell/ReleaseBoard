@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 
 import { db } from "@/lib/db";
-import { applications, updates } from "@/lib/db/schema";
+import { applications, updates ,subscribers  } from "@/lib/db/schema";
 import { requireAuth, unauthorizedResponse } from "@/lib/server-auth";
+import { github } from "@/lib/github";
+import { resend } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -122,6 +124,103 @@ export async function PATCH(
       })
       .where(eq(updates.id, updateId))
       .returning();
+      if(body.status === "published") {
+
+const [application] =
+await db
+.select()
+.from(applications)
+.where(
+ eq(
+ applications.id,
+ updated.applicationId
+ )
+)
+.limit(1);
+
+
+if(
+ application.githubOwner &&
+ application.githubRepo
+){
+
+try {
+
+await github.repos.createRelease({
+
+owner: application.githubOwner,
+
+repo: application.githubRepo,
+
+tag_name:`v${updated.version}`,
+
+name:updated.title,
+
+body:updated.description,
+
+});
+
+} catch(error){
+
+console.error(
+"GitHub release failed",
+error
+);
+
+}
+
+}
+
+
+// send emails
+
+const appSubscribers =
+await db
+.select()
+.from(subscribers)
+.where(
+ eq(
+ subscribers.applicationId,
+ application.id
+ )
+);
+
+
+for(
+const subscriber of appSubscribers
+){
+
+await resend.emails.send({
+
+from:
+"ReleaseBoard <onboarding@resend.dev>",
+
+to:
+subscriber.email,
+
+subject:
+`${updated.title} released`,
+
+html:
+`
+<h2>
+${updated.title}
+</h2>
+
+<p>
+${updated.description}
+</p>
+
+<a href="http://localhost:3000/changelog/${application.id}">
+Read changelog
+</a>
+`
+
+});
+
+}
+
+}
 
     return NextResponse.json(updated);
   } catch (error) {

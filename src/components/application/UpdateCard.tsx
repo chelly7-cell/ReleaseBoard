@@ -33,8 +33,6 @@ export default function UpdateCard({ update }: Props) {
   return (
     <Card className="group overflow-hidden rounded-3xl border bg-background transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
       <div className="relative">
-        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-violet-600 via-indigo-600 to-sky-600" />
-
         <div className="p-6">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex min-w-0 flex-1 gap-4">

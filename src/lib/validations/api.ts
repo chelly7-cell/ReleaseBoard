@@ -27,9 +27,17 @@ export function parsePagination(searchParams: URLSearchParams) {
 }
 
 export const applicationCreateSchema = z.object({
-  name: z.string().trim().min(1).max(120),
-  description: z.string().trim().max(1000).optional().nullable(),
-  logo: z.string().url().optional().nullable(),
+  name: z.string().min(1),
+
+  description: z.string().optional(),
+
+  logo: z.string().optional(),
+
+  website: z.string().optional(),
+
+  githubOwner: z.string().optional(),
+
+  githubRepo: z.string().optional(),
 });
 
 export const updateStatusSchema = z.enum(["draft", "published"]);

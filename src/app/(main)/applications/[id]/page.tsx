@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-
+import GithubReleases from "@/components/application/GithubReleases";
 import {
   AlertCircle,
   FolderOpen,
@@ -161,6 +161,12 @@ export default function ApplicationDetailsPage() {
         totalUpdates={updates.length}
         publishedUpdates={publishedUpdates}
         draftUpdates={draftUpdates}
+      />
+
+      {/* GITHUB RELEASES */}
+
+      <GithubReleases
+        applicationId={application.id}
       />
 
 

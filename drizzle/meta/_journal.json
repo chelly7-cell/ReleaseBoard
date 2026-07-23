@@ -50,6 +50,20 @@
       "when": 1784727723872,
       "tag": "0006_sharp_blur",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1784754232804,
+      "tag": "0007_perfect_redwing",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1784755311545,
+      "tag": "0008_nebulous_wraith",
+      "breakpoints": true
     }
   ]
 }
